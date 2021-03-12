@@ -1,0 +1,6 @@
+namespace BombPeli
+{
+    class GameInfo {
+
+    }
+}
