@@ -7,9 +7,11 @@ namespace BombPeli
     class GameListState : State
     {
         private List<GameInfo> games;
-        public GameListState(List<GameInfo> games, StateMachine sm) : base(sm)
+        private Config config;
+
+        public GameListState(List<GameInfo> games, StateMachine sm, Config config) : base(sm)
         {
-            
+            this.config = config;
             this.games = games;
         }
 
@@ -34,15 +36,13 @@ namespace BombPeli
         public void CreateGame()
         {
 
-            Config.MyRole = Role.HOST;
-            stateMachine.ChangeState(new ConfigGameState(stateMachine));
+            stateMachine.ChangeState(new ConfigGameState(stateMachine, config));
 
 
         }
 
         void JoinGame()
         {
-            Config.MyRole = Role.NORMAL;
         }
 
         void RefreshList()

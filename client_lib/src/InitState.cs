@@ -5,6 +5,7 @@ namespace BombPeli
 {
     class InitState : State
     {
+
         KeyDataCollection clientConfig;
         public InitState(StateMachine sm) :base(sm)
         {
@@ -14,6 +15,7 @@ namespace BombPeli
         public override void BeginState()
         {
             ReadConfig();
+            FetchGameList ();
         }
 
         public override void ProcessState()

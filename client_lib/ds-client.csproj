@@ -5,7 +5,7 @@
     <ProjectGuid>{BA1BDF62-216C-44BE-9D5C-1CBB9C5F98FE}</ProjectGuid>
     <OutputType>Library</OutputType>
     <NoStandardLibraries>false</NoStandardLibraries>
-    <AssemblyName>ConsoleApplication</AssemblyName>
+    <AssemblyName>ds_client_lib</AssemblyName>
     <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
     <TargetFrameworkProfile>
     </TargetFrameworkProfile>

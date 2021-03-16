@@ -6,9 +6,11 @@ namespace BombPeli
     class ConfigGameState : State 
     {
 
+        private Config config;
 
-        public ConfigGameState(StateMachine sm): base(sm)
+        public ConfigGameState(StateMachine sm, Config config): base(sm)
         {
+            this.config = config;
         }
 
         public override void BeginState()
@@ -31,7 +33,7 @@ namespace BombPeli
 
             GameInfo gi = AskGameInfo();
             // Game info to discovery server
-            stateMachine.ChangeState(new GameLobbyState(stateMachine,gi));
+            stateMachine.ChangeState(new GameLobbyState(stateMachine, gi, config));
        
         }
 

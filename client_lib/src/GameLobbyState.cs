@@ -6,17 +6,22 @@ namespace BombPeli
 {
     class GameLobbyState :State
     {
-        GameInfo gameInfo;
-        List<PeerInfo> peerInfos;
-        UDPManager udpm;
 
-        public GameLobbyState(StateMachine sm, GameInfo gi) :base(sm)
+        private Config config;
+        private GameInfo gameInfo;
+        private List<PeerInfo> peerInfos;
+        private UDPManager udpm;
+
+        public GameLobbyState(StateMachine sm, GameInfo gi, Config config)
+            : base(sm)
         {
-            gameInfo = gi;
+            this.gameInfo = gi;
+            this.config = config;
         }
+
         public override void BeginState()
         {
-            udpm = new UDPManager(Config.GetPort());
+            udpm = new UDPManager(config.GetUshort ("localport"));
             peerInfos = new List<PeerInfo>();
 
         }
@@ -58,7 +63,7 @@ namespace BombPeli
         private void LeaveGame()
         {
             Console.WriteLine("Leaving game");
-            stateMachine.ChangeState(new GameListState(null, stateMachine));
+            stateMachine.ChangeState(new GameListState(null, stateMachine, config));
         }
 
         private void DisplayMenu()
