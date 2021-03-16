@@ -1,20 +1,30 @@
 using IniParser;
-using IniParser.Model; 
+using IniParser.Model;
+
+using System;
+using System.Net;
+using System.Net.Http;
+using System.Threading.Tasks;
+using Newtonsoft.Json;
+using System.Collections.Generic;
 
 namespace BombPeli
 {
     class InitState : State
     {
 
-        KeyDataCollection clientConfig;
-        public InitState(StateMachine sm) :base(sm)
-        {
+        private Config config;
+        private string configPath;
+        
 
+        public InitState(StateMachine sm, string configPath) :base(sm)
+        {
+            this.configPath = configPath;
         }
 
         public override void BeginState()
         {
-            ReadConfig();
+            ReadConfig ();
             FetchGameList ();
         }
 
@@ -28,18 +38,14 @@ namespace BombPeli
             throw new System.NotImplementedException();
         }
 
-        void ReadConfig() 
-        {
-            // Read client configs from file
-            var parser = new FileIniDataParser();
-            IniData confdata = parser.ReadFile("config.ini");
-            clientConfig = confdata["client"];
-
+        private void ReadConfig () {
+            config = new Config (configPath);
         }
 
-        void FetchGameList() 
+        private void FetchGameList() 
         {
-            // Fetch list of games from discovery server
+            ServiceDiscoveryClient client = new ServiceDiscoveryClient (config);
+            List<GameInfo> games = client.FetchGameList();
         }
     }
 }

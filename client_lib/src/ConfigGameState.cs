@@ -42,7 +42,8 @@ namespace BombPeli
             Console.Write("Input game name: ");
             var gameName=Console.ReadLine();
             Console.WriteLine("the name of new game {0}", gameName);
-            return new GameInfo(gameName);
+            
+            return new GameInfo(0, gameName, "", config.GetUshort ("localport"), GameStatus.OPEN);
         }
     }
 }
