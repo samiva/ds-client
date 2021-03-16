@@ -13,17 +13,17 @@ namespace BombPeli
 
         public override void BeginState()
         {
-            throw new System.NotImplementedException();
+            throw new NotImplementedException();
         }
 
         public override void ProcessState()
         {
-            PublishGame();  
+            PublishGame();
         }
 
         public override void EndState()
         {
-            throw new System.NotImplementedException();
+            throw new NotImplementedException();
         }
 
         private void PublishGame() 
