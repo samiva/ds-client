@@ -2,12 +2,7 @@ namespace BombPeli
 {
     public class StateMachine
     {
-        private State mCurrentState;
-
-        public State CurrentState {
-            get { return mCurrentState; }
-           private set { mCurrentState=value; }
-        }
+        public State CurrentState { get; private set; }
 
         public void ChangeState(State state)
         {

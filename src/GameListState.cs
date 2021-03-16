@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using kevincastejon;
 
 namespace BombPeli
 {
@@ -7,12 +9,16 @@ namespace BombPeli
         private List<GameInfo> games;
         public GameListState(List<GameInfo> games, StateMachine sm) : base(sm)
         {
+            
             this.games = games;
         }
 
         public override void BeginState()
         {
-            throw new System.NotImplementedException();
+            if (games == null)
+            {
+                RefreshList();
+            }
         }
 
         public override void ProcessState()
@@ -25,25 +31,31 @@ namespace BombPeli
             throw new System.NotImplementedException();
         }
 
-        void CreateGame()
+        public void CreateGame()
         {
+
+            Config.MyRole = Role.HOST;
+            stateMachine.ChangeState(new ConfigGameState(stateMachine));
+
 
         }
 
         void JoinGame()
         {
-
+            Config.MyRole = Role.NORMAL;
         }
 
         void RefreshList()
         {
-
+            Console.WriteLine("Refresh game list");
         }
 
-        void DisplayGameList()
+        void DisplayGameList()  
         {
 
         }
+
+        
 
     }
 }
