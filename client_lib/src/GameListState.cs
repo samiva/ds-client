@@ -35,8 +35,8 @@ namespace BombPeli
 
         public void CreateGame()
         {
-
-            stateMachine.ChangeState(new ConfigGameState(stateMachine, config));
+            P2PComm p2p = new P2PComm(config.GetUshort("localport"));
+            stateMachine.ChangeState(new ConfigGameState(stateMachine, config, p2p));
 
 
         }

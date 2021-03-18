@@ -10,18 +10,18 @@ namespace BombPeli
         private Config config;
         private GameInfo gameInfo;
         private List<PeerInfo> peerInfos;
-        private UDPManager udpm;
+        private P2PComm p2p;
 
-        public GameLobbyState(StateMachine sm, GameInfo gi, Config config)
+        public GameLobbyState(StateMachine sm, GameInfo gi, Config config, P2PComm p2p)
             : base(sm)
         {
             this.gameInfo = gi;
             this.config = config;
+            this.p2p = p2p;
         }
 
         public override void BeginState()
         {
-            udpm = new UDPManager(config.GetUshort ("localport"));
             peerInfos = new List<PeerInfo>();
 
         }
@@ -55,9 +55,9 @@ namespace BombPeli
             // Inform peers
             foreach(var pi in peerInfos)
             {
-                udpm.Send("game", new { status=GameStatus.RUNNING}, pi.Address, pi.Port);
+                p2p.Send("game", new { status=GameStatus.RUNNING}, pi.Address, pi.Port);
             }
-            stateMachine.ChangeState(new GameState(stateMachine));
+            stateMachine.ChangeState(new GameState(stateMachine, p2p));
         }
 
         private void LeaveGame()

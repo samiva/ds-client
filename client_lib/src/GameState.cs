@@ -2,10 +2,10 @@ namespace BombPeli
 {
     class GameState : State
     {
-
-        public GameState(StateMachine sm) :base(sm)
+        private P2PComm p2p;
+        public GameState(StateMachine sm, P2PComm p2p) :base(sm)
         {
-
+            this.p2p = p2p;
         }
         
         public override void BeginState()

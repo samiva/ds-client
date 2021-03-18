@@ -7,10 +7,12 @@ namespace BombPeli
     {
 
         private Config config;
+        private P2PComm p2p;
 
-        public ConfigGameState(StateMachine sm, Config config): base(sm)
+        public ConfigGameState(StateMachine sm, Config config, P2PComm p2p): base(sm)
         {
             this.config = config;
+            this.p2p = p2p;
         }
 
         public override void BeginState()
@@ -33,7 +35,7 @@ namespace BombPeli
 
             GameInfo gi = AskGameInfo();
             // Game info to discovery server
-            stateMachine.ChangeState(new GameLobbyState(stateMachine, gi, config));
+            stateMachine.ChangeState(new GameLobbyState(stateMachine, gi, config, p2p));
        
         }
 
