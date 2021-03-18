@@ -5,6 +5,7 @@ using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -22,6 +23,10 @@ namespace BombPeli
 			this.gamesApi = new Uri (serviceLocatorDomain, "/games");
 		}
 
+		static public GameInfo CreateNewGameInstance (string name, ushort port) {
+			return new GameInfo (0, name, "", port, GameStatus.OPEN);
+		}
+
 		public List<GameInfo> FetchGameList () {
 			HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, gamesApi);
 			return ParseGameListResponse (SendRequest (request));
@@ -30,18 +35,24 @@ namespace BombPeli
 		public GameInfo RegisterGame (GameInfo game) {
 			HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, gamesApi);
 			request.Content = new StringContent (SerializeCreateGameInfo (game));
+			request.Headers.Add ("Accept", "application/json");
+			request.Content.Headers.ContentType = new MediaTypeHeaderValue ("application/json");
 			return ParseGameCreateResponse (SendRequest (request));
 		}
 
 		public void StartGame (GameInfo game) {
 			HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Put, gamesApi);
 			request.Content = new StringContent (SerializeStartGameInfo (game));
+			request.Headers.Add ("Accept", "application/json");
+			request.Content.Headers.ContentType = new MediaTypeHeaderValue ("application/json");
 			SendRequest (request);
 		}
 
 		public void DeregisterGame (GameInfo game) {
 			HttpRequestMessage request = new HttpRequestMessage (HttpMethod.Delete, gamesApi);
 			request.Content = new StringContent (SerializeDeregisterGameInfo (game));
+			request.Headers.Add ("Accept", "application/json");
+			request.Content.Headers.ContentType = new MediaTypeHeaderValue ("application/json");
 			SendRequest (request);
 		}
 
@@ -94,13 +105,15 @@ namespace BombPeli
 
 		private string SerializeStartGameInfo (GameInfo info) {
 			return JsonConvert.SerializeObject (new {
-				id = info.Id
+				id = info.Id,
+				port = info.Port
 			}, Formatting.None);
 		}
 
 		private string SerializeDeregisterGameInfo (GameInfo info) {
 			return JsonConvert.SerializeObject (new {
-				id = info.Id
+				id = info.Id,
+				port = info.Port
 			}, Formatting.None);
 		}
 

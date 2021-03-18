@@ -12,6 +12,6 @@ namespace BombPeli
         public int RemotePort { get; set; }
         public int ID { get; set; }
         public dynamic Data { get; set; }
-        public Channel MessageChannel { get; set; } = Channel.DEFAULT;         
+        public Channel MessageChannel { get; set; } = Channel.DEFAULT;
     }
 }
