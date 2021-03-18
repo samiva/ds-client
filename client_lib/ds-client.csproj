@@ -54,6 +54,7 @@
     <Reference Include="System.Core" />
     <Reference Include="System.Data" />
     <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="System.Net.Http" />
     <Reference Include="System.Xml" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="TimerEvent, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
@@ -84,6 +85,7 @@
     <Compile Include="src\InitState.cs" />
     <Compile Include="src\PeerInfo.cs" />
     <Compile Include="src\Role.cs" />
+    <Compile Include="src\ServiceDiscoveryClient.cs" />
     <Compile Include="src\State.cs" />
     <Compile Include="src\StateMachine.cs" />
   </ItemGroup>
