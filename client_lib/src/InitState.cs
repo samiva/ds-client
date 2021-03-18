@@ -1,11 +1,3 @@
-using IniParser;
-using IniParser.Model;
-
-using System;
-using System.Net;
-using System.Net.Http;
-using System.Threading.Tasks;
-using Newtonsoft.Json;
 using System.Collections.Generic;
 
 namespace BombPeli

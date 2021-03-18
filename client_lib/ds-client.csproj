@@ -40,34 +40,18 @@
     <StartupObject />
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="EventManager, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>packages\EventManager.1.0.6\lib\net461\EventManager.dll</HintPath>
-    </Reference>
-    <Reference Include="INIFileParser, Version=2.5.2.0, Culture=neutral, PublicKeyToken=79af7b307b65cf3c, processorArchitecture=MSIL">
-      <HintPath>packages\ini-parser.2.5.2\lib\net20\INIFileParser.dll</HintPath>
-    </Reference>
     <Reference Include="Microsoft.CSharp" />
-    <Reference Include="Newtonsoft.Json, Version=12.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
-      <HintPath>packages\Newtonsoft.Json.12.0.3\lib\net45\Newtonsoft.Json.dll</HintPath>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Data" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="System.Xml" />
     <Reference Include="System.Xml.Linq" />
-    <Reference Include="TimerEvent, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>packages\TimerEvent.1.0.6\lib\net461\TimerEvent.dll</HintPath>
-    </Reference>
-    <Reference Include="UDPManager, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>packages\UDPManager.1.0.6\lib\net461\UDPManager.dll</HintPath>
-    </Reference>
   </ItemGroup>
   <ItemGroup>
     <None Include=".vscode\launch.json" />
     <None Include=".vscode\tasks.json" />
     <None Include="app.config" />
-    <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include=".vs\ds-client\v15\" />
@@ -82,10 +66,33 @@
     <Compile Include="src\GameState.cs" />
     <Compile Include="src\GameStatus.cs" />
     <Compile Include="src\InitState.cs" />
+    <Compile Include="src\P2PComm.cs" />
+    <Compile Include="src\P2PCommEventArgs.cs" />
     <Compile Include="src\PeerInfo.cs" />
     <Compile Include="src\Role.cs" />
+    <Compile Include="src\ServiceDiscoveryClient.cs" />
     <Compile Include="src\State.cs" />
     <Compile Include="src\StateMachine.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="EventManager">
+      <Version>1.0.6</Version>
+    </PackageReference>
+    <PackageReference Include="ini-parser">
+      <Version>2.5.2</Version>
+    </PackageReference>
+    <PackageReference Include="Newtonsoft.Json">
+      <Version>12.0.3</Version>
+    </PackageReference>
+    <PackageReference Include="System.Net.Http">
+      <Version>4.3.4</Version>
+    </PackageReference>
+    <PackageReference Include="TimerEvent">
+      <Version>1.0.6</Version>
+    </PackageReference>
+    <PackageReference Include="UDPManager">
+      <Version>1.0.6</Version>
+    </PackageReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSHARP.Targets" />
   <ProjectExtensions>
