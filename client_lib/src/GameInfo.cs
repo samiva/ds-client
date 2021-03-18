@@ -1,6 +1,6 @@
 namespace BombPeli
 {
-    struct GameInfo {
+    public struct GameInfo {
 
         public ulong Id {
             get; private set;

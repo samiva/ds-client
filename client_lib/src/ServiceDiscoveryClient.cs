@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace BombPeli
 {
-	class ServiceDiscoveryClient
+	public class ServiceDiscoveryClient
 	{
 		private Config config;
 		private Uri serviceLocatorDomain;
@@ -48,10 +48,7 @@ namespace BombPeli
 		private string SendRequest (HttpRequestMessage request) {
 			using (HttpClient client = new HttpClient ()) {
 				Task<HttpResponseMessage> t = client.SendAsync(request);
-				bool done = t.Wait (5000);
-				if (!done) {
-					throw new Exception ("Failed to send request.");
-				}
+				t.Wait();
 				HttpResponseMessage response = t.Result;
 				int code = (int)response.StatusCode;
 				if (!(100 <= code && code < 400)) {

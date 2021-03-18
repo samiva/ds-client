@@ -10,7 +10,13 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\client_lib\ds-client.csproj" />
+    <ProjectReference Include="..\client_lib\client_lib.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="ds_client_lib">
+      <HintPath>..\client_lib\bin\Debug\client_lib.dll</HintPath>
+    </Reference>
   </ItemGroup>
 
 </Project>

@@ -55,7 +55,7 @@ namespace BombPeli
             // Inform peers
             foreach(var pi in peerInfos)
             {
-                p2p.Send("game", new { status=GameStatus.RUNNING}, pi.Address, pi.Port);
+                p2p.Send(Channel.GAME, new { status=GameStatus.RUNNING}, pi.Address, pi.Port);
             }
             stateMachine.ChangeState(new GameState(stateMachine, p2p));
         }

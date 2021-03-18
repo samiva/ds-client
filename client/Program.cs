@@ -1,6 +1,7 @@
 ﻿using System;
-using BombPeli;
+using System.Collections.Generic;
 
+using BombPeli;
 
 namespace client
 {
@@ -9,6 +10,11 @@ namespace client
         static void Main(string[] args)
         {
             Console.WriteLine("Hello World!");
+
+            Config config = new Config("config.ini");
+            ServiceDiscoveryClient client = new ServiceDiscoveryClient(config);
+            List<GameInfo> games = client.FetchGameList ();
+
         }
     }
 }

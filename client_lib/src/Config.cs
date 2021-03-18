@@ -1,10 +1,12 @@
 ﻿using System;
+using System.Globalization;
+
 using IniParser;
 using IniParser.Model;
 
 namespace BombPeli
 {
-    class Config
+    public class Config
     {
         private KeyDataCollection data;
 
@@ -163,7 +165,7 @@ namespace BombPeli
         }
 
         public ulong GetUlong (string key) {
-            return ulong.Parse (data[key]);
+            return ulong.Parse (data[key], CultureInfo.InvariantCulture);
         }
 
         public float GetFloat (string key) {
