@@ -16,7 +16,5 @@ namespace BombPeli
 	public partial class App : Application
 	{
 
-		public Config config;
-
 	}
 }
