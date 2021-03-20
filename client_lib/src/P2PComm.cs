@@ -34,6 +34,11 @@ namespace BombPeliLib
 			udpm.On<UDPManagerEvent> (UDPManagerEvent.Names.DATA_RECEIVED, DataReceivedHandler);
 			udpm.On<UDPManagerEvent> (UDPManagerEvent.Names.DATA_RETRIED, DataRetriedHandler);
 			udpm.On<UDPManagerEvent> (UDPManagerEvent.Names.DATA_SENT, DataSentHandler);
+
+			udpm.AddChannel(Channel.UNKNOWN.ToString(), true, true, 50, 1000);
+			udpm.AddChannel(Channel.DEFAULT.ToString(), true, true, 50, 1000);
+			udpm.AddChannel(Channel.MANAGEMENT.ToString(), true, true, 50, 1000);
+			udpm.AddChannel(Channel.GAME.ToString(), true, true, 50, 1000);
 		}
 
 		public event EventHandler<P2PCommEventArgs> UDPManagerBound;
