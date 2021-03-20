@@ -29,9 +29,11 @@ namespace BombPeli
 		public event CancelCreateGameEventHandler OnCancelCreateGame;
 
 		private Config config;
+		private ConfigGameState configState;
 
-		public ConfigureGame (Config config) {
+		public ConfigureGame (ConfigGameState configState, Config config) {
 			InitializeComponent ();
+			this.configState = configState;
 			this.config = config;
 		}
 
@@ -47,7 +49,7 @@ namespace BombPeli
 				return;
 			}
 			GameInfo game = ServiceDiscoveryClient.CreateNewGameInstance(gameName, config.GetUshort("localport"));
-			OnPublishGame?.Invoke (this, new PublishGameEventArgs (game, ErrorMsgDisplay));
+			OnPublishGame?.Invoke (this, new PublishGameEventArgs (configState, game, ErrorMsgDisplay));
 		}
 
 		private void CancelButton_Click (object sender, RoutedEventArgs e) {

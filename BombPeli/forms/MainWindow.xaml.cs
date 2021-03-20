@@ -27,8 +27,7 @@ namespace BombPeli
 		private Init initView;
 		private GameList gameList;
 		private ConfigureGame configGame;
-		private GameLobby lobby;
-
+		private GameLobby lobbyView;
 		private P2Pplayer p2pClient;
 
 		public MainWindow () {
@@ -57,17 +56,45 @@ namespace BombPeli
 			List<GameInfo> games = initView.Games;
 			initView = null;
 
-			gameList = new GameList (games, config);
+			GameListState gameListState = new GameListState (games, config);
+			gameList = new GameList (gameListState, config);
 			gameList.OnCreateGame += CreateNewGameHandler;
 			gameList.OnJoinGame += JoinGameHandler;
 			gameList.OnQuit += QuitHandler;
 			DisplayPage (gameList);
 		}
 
+		private void InitLobby (P2Pplayer client, GameInfo game, List<PeerInfo> peers, bool isHost) {
+			if (lobbyView == null) {
+				lobbyView = new GameLobby ();
+				lobbyView.OnStartGame += StartGameHandler;
+				lobbyView.OnLeaveGame += LeaveGameHandler;
+				/*
+					- P2P client joined
+					- P2P client left
+				*/
+			}
+			lobbyView.Init (new GameLobbyState (game, peers, config, client, isHost));
+		}
+
+		private bool InitP2PClient () {
+			ushort port = config.GetUshort ("localport");
+			P2PComm comm;
+			try {
+				comm = new P2PComm (port);
+			} catch (Exception e) {
+				MessageBox.Show (string.Format ("Could not initiate P2P node.\n{0}\n\n{1}", e.Message, e.StackTrace.ToString ()));
+				return false;
+			}
+			p2pClient = new P2Pplayer (comm);
+			return true;
+		}
+
 		public void CreateNewGameHandler (object sender, EventArgs e) {
 			// Open game creation view.
 			if (configGame == null) {
-				configGame = new ConfigureGame (config);
+				ConfigGameState configState = new ConfigGameState(config);
+				configGame = new ConfigureGame (configState, config);
 				configGame.OnPublishGame += PublishGameHandler;
 				configGame.OnCancelCreateGame += CancelConfigureGameHandler;
 			}
@@ -75,62 +102,43 @@ namespace BombPeli
 		}
 
 		public void JoinGameHandler (object sender, JoinGameEventArgs e) {
-			
-			bool AbortJoin (GameInfo game, Label errorMsg) {
-				try {
-					p2pClient.SendQuitGame (game.Ip, game.Port);
-				} catch (Exception ex) {
-					errorMsg.Content = string.Format ("Failed to cancel join.\n{0}\n\n{1}", ex.Message, ex.StackTrace.ToString ());
-					return false;
-				}
-				return true;
-			}
-			
-			bool SendJoin (GameInfo game, Label errorMsg, in int MAX_RETRIES) {
-				bool success = false;
-				int i = 0;
-				do {
-					try {
-						p2pClient.SendJoinGame (game.Ip, game.Port);
-						success = true;
-					} catch (Exception ex) {
-						errorMsg.Content = string.Format ("Could not join game. Retrying...\n{0}\n\n{1}", ex.Message, ex.StackTrace.ToString ());
-					}
-					++i;
-				} while (!success && i < MAX_RETRIES);
-				return success;
-			}
-
-			bool FetchPeers (GameInfo game, Label errorMsg, in int MAX_RETRIES) {
-				bool success = false;
-				int i = 0;
-				do {
-					try {
-						// TODO: Fetch peer list
-						success = true;
-					} catch (Exception ex) {
-						errorMsg.Content = string.Format ("Could not fetch peer list. Retrying...\n{0}\n\n{1}", ex.Message, ex.StackTrace.ToString ());
-					}
-					++i;
-				} while (!success && i < MAX_RETRIES);
-				return success;
-			}
+			Label errorMsg = e.errorMsg;
 
 			if (!InitP2PClient ()) {
 				return;
 			}
-			const int MAX_RETRIES = 3;
-			if (
-				!SendJoin (e.game, e.errorMsg, MAX_RETRIES)
-				|| !FetchPeers (e.game, e.errorMsg, MAX_RETRIES)
-			) {
-				AbortJoin (e.game, e.errorMsg);
+			List<PeerInfo> peers;
+			try {
+				peers = e.gameList.JoinGame (e.game, p2pClient);
+			} catch (Exception ex) {
+				errorMsg.Content = string.Format ("Could not join game.\n{0}\n\n{1}", ex.Message, ex.StackTrace.ToString ());
 				return;
 			}
+			if (peers == null) {
+				return;
+			}
+			InitLobby (p2pClient, e.game, peers, false);
+			DisplayPage (lobbyView);
+		}
 
+		public void StartGameHandler (object sender, StartGameEventArgs e) {
+			try {
+				e.lobby.StartGame ();
+			} catch (Exception ex) {
+				MessageBox.Show (string.Format ("Failed to start game.\n{0}\n\n{1}", ex.Message, ex.StackTrace.ToString ()));
+				return;
+			}
+		}
 
-			InitLobby ();
-			DisplayPage (lobby);
+		public void LeaveGameHandler (object sender, LeaveGameEventArgs e) {
+			try {
+				e.lobby.LeaveGame ();
+			} catch (Exception ex) {
+				MessageBox.Show (string.Format ("Failed to leave game lobby.\n{0}n\n{1}", ex.Message, ex.StackTrace.ToString ()));
+				return;
+			}
+			
+			DisplayPage (gameList);
 		}
 
 		public void QuitHandler (object sender, EventArgs e) {
@@ -139,21 +147,17 @@ namespace BombPeli
 		}
 
 		public void PublishGameHandler (object sender, PublishGameEventArgs e) {
-			// Create P2P node and post it to service discovery server.
 			if (!InitP2PClient ()) {
 				return;
 			}
-
-			ServiceDiscoveryClient client = new ServiceDiscoveryClient(config);
 			try {
-				client.RegisterGame (e.game);
+				e.configState.PublishGame (e.game);
 			} catch (Exception ex) {
-				MessageBox.Show (string.Format("Could not register game. Try publishing again.\n{0}\n\n{1}", ex.Message, ex.StackTrace.ToString ()));
+				MessageBox.Show (string.Format ("Could not register game. Try publishing again.\n{0}\n\n{1}", ex.Message, ex.StackTrace.ToString ()));
 				return;
 			}
-
-			InitLobby ();
-			DisplayPage (lobby);
+			InitLobby (p2pClient, e.game, new List<PeerInfo> (), true);
+			DisplayPage (lobbyView);
 		}
 
 		public void CancelConfigureGameHandler (object sender, EventArgs e) {
@@ -164,31 +168,6 @@ namespace BombPeli
 			this.DataContext = page;
 			page.DataContext = page;
 			ContentFrame.Navigate (page);
-		}
-
-		private void InitLobby () {
-			if (lobby == null) {
-				lobby = new GameLobby ();
-				/*
-					- P2P client joined
-					- P2P client left
-				*/
-			}
-		}
-
-		private bool InitP2PClient () {
-			if (p2pClient == null) {
-				ushort port = config.GetUshort ("localport");
-				P2PComm comm;
-				try {
-					comm = new P2PComm (port);
-				} catch (Exception e) {
-					MessageBox.Show (string.Format("Could not initiate P2P node.\n{0}\n\n{1}", e.Message, e.StackTrace.ToString ()));
-					return false;
-				}
-				p2pClient = new P2Pplayer (comm);
-			}
-			return true;
 		}
 
 	}

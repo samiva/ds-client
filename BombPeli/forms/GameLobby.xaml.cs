@@ -1,4 +1,6 @@
-﻿using System;
+﻿using BombPeliLib;
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -20,8 +22,56 @@ namespace BombPeli
 	/// </summary>
 	public partial class GameLobby : Page
 	{
+
+		public delegate void StartGameEventHandler (object sender, StartGameEventArgs e);
+		public delegate void LeaveGameEventHandler (object sender, LeaveGameEventArgs e);
+		public event StartGameEventHandler OnStartGame;
+		public event LeaveGameEventHandler OnLeaveGame;
+
+		private GameLobbyState lobby;
+
 		public GameLobby () {
 			InitializeComponent ();
 		}
+
+		public void Init (GameLobbyState lobby) {
+			this.lobby = lobby;
+
+			ListBoxPeers.DataContext = this;
+			ViewControls.Children.Clear ();
+			if (lobby.IsHost) {
+				ViewControls.Children.Add (MakeStartButton ());
+			}
+			ViewControls.Children.Add (MakeQuitButton ());
+		}
+
+		public List<PeerInfo> Peers {
+			get { return lobby.Peers; }
+		}
+
+		private Button MakeStartButton () {
+			Button button = new Button ();
+			button.Name = "start";
+			button.Click += start_Click;
+			button.Content = "Start game";
+			return button;
+		}
+
+		private Button MakeQuitButton () {
+			Button button = new Button ();
+			button.Name = "quit";
+			button.Click += quit_Click;
+			button.Content = "Leave game";
+			return button;
+		}
+
+		private void start_Click (object sender, RoutedEventArgs e) {
+			OnStartGame?.Invoke (this, new StartGameEventArgs (lobby));
+		}
+
+		private void quit_Click (object sender, RoutedEventArgs e) {
+			OnLeaveGame?.Invoke (this, new LeaveGameEventArgs (lobby));
+		}
+
 	}
 }
