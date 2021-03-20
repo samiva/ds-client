@@ -1,7 +1,7 @@
 using System;
 using kevincastejon;
 
-namespace BombPeli
+namespace BombPeliLib
 {
     class ConfigGameState : State 
     {

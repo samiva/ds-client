@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 using Newtonsoft.Json;
 using System.Collections.Generic;
 
-namespace BombPeli
+namespace BombPeliLib
 {
     class InitState : State
     {

@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using kevincastejon;
 
-namespace BombPeli
+namespace BombPeliLib
 {
     struct PeerInfo
     {

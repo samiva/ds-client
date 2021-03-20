@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using kevincastejon;
 
-namespace BombPeli
+namespace BombPeliLib
 {
     class GameLobbyState :State
     {

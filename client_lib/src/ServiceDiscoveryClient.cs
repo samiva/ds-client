@@ -1,4 +1,4 @@
-﻿using BombPeli;
+﻿using BombPeliLib;
 
 using Newtonsoft.Json;
 
@@ -9,7 +9,7 @@ using System.Net.Http.Headers;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace BombPeli
+namespace BombPeliLib
 {
 	public class ServiceDiscoveryClient
 	{

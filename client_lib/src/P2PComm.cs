@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 using kevincastejon;
 
-namespace BombPeli
+namespace BombPeliLib
 {
     public enum Channel : byte
     {

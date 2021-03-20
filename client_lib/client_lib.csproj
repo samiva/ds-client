@@ -3,7 +3,7 @@
   <PropertyGroup>
     <TargetFramework>net5.0</TargetFramework>
     <AssemblyName>client_lib</AssemblyName>
-    <RootNamespace>client_lib</RootNamespace>
+    <RootNamespace>BombPeliLib</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>

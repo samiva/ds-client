@@ -4,7 +4,7 @@ using System.Globalization;
 using IniParser;
 using IniParser.Model;
 
-namespace BombPeli
+namespace BombPeliLib
 {
     public class Config
     {

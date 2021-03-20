@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace BombPeli
+namespace BombPeliLib
 {
     
     class Game {

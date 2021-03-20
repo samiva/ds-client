@@ -1,4 +1,4 @@
-namespace BombPeli
+namespace BombPeliLib
 {
     class GameState : State
     {

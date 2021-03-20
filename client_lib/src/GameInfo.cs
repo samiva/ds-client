@@ -1,4 +1,4 @@
-namespace BombPeli
+namespace BombPeliLib
 {
     public struct GameInfo {
 
