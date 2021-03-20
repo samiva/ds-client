@@ -14,7 +14,7 @@ namespace BombPeliLib
         MANAGEMENT = 0x02,
         GAME = 0x03
     };
-    class P2PComm
+    public class P2PComm
     {
             
         private UDPManager udpm;

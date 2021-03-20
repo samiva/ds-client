@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace BombPeliLib
 {
-    class P2PCommEventArgs : EventArgs
+    public class P2PCommEventArgs : EventArgs
     {
         public string RemoteAddress { get; set; }
         public int RemotePort { get; set; }

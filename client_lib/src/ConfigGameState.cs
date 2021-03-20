@@ -1,5 +1,4 @@
 using System;
-using kevincastejon;
 
 namespace BombPeliLib
 {
@@ -17,7 +16,6 @@ namespace BombPeliLib
 
         public override void BeginState()
         {
-            throw new NotImplementedException();
         }
 
         public override void ProcessState()
@@ -27,7 +25,6 @@ namespace BombPeliLib
 
         public override void EndState()
         {
-            throw new NotImplementedException();
         }
 
         private void PublishGame() 
@@ -35,7 +32,7 @@ namespace BombPeliLib
 
             GameInfo gi = AskGameInfo();
             // Game info to discovery server
-            stateMachine.ChangeState(new GameLobbyState(stateMachine, gi, config, p2p));
+            stateMachine.ChangeState(new GameLobbyState(stateMachine, gi, config, p2p, Role.HOST));
        
         }
 

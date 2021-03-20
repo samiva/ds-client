@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using kevincastejon;
 
 namespace BombPeliLib
 {
@@ -11,42 +10,71 @@ namespace BombPeliLib
         private GameInfo gameInfo;
         private List<PeerInfo> peerInfos;
         private P2PComm p2p;
+        private Role role; 
 
-        public GameLobbyState(StateMachine sm, GameInfo gi, Config config, P2PComm p2p)
+        public GameLobbyState(StateMachine sm, GameInfo gi, Config config, P2PComm p2p, Role role)
             : base(sm)
         {
             this.gameInfo = gi;
             this.config = config;
             this.p2p = p2p;
+            this.role = role;
+            
+        }
+
+        private void P2p_DataReceived(object sender, P2PCommEventArgs e)
+        {
+            if (e.MessageChannel == Channel.MANAGEMENT)
+            {
+                if(role==Role.HOST && peerInfos.Count <= config.GetInt("maxpeer"))
+                {
+                    PeerInfo peer = new PeerInfo(e.RemoteAddress, e.RemotePort);
+                    peerInfos.Add(peer);
+                }
+            }
+            else if(e.MessageChannel==Channel.GAME)
+            {
+                GameStatus status = e.Data.status;
+                if (status == GameStatus.RUNNING)
+                {
+                    stateMachine.ChangeState(new GameState(stateMachine, p2p));
+                }
+                else if (status == GameStatus.ENDED)
+                {
+                    //stateMachine.ChangeState(new GameListState(null, stateMachine, config));
+                    LeaveGame();
+                }
+            }
         }
 
         public override void BeginState()
         {
             peerInfos = new List<PeerInfo>();
-
+            p2p.DataReceived += P2p_DataReceived;
         }
 
         public override void ProcessState()
         {
-            DisplayMenu();
+            //DisplayMenu();
 
-            int choice = int.Parse(Console.ReadLine());
+            //int choice = int.Parse(Console.ReadLine());
 
-            switch (choice)
-            {
-                case 1:
-                    StartGame();
-                    break;
-                case 2:
-                    LeaveGame();
-                    break;
-                default:
-                    break;
-            }
+            //switch (choice)
+            //{
+            //    case 1:
+            //        StartGame();
+            //        break;
+            //    case 2:
+            //        LeaveGame();
+            //        break;
+            //    default:
+            //        break;
+            //}
         }
 
         public override void EndState()
         {
+            p2p.DataReceived -= P2p_DataReceived;
         }
 
         private void StartGame()
@@ -63,6 +91,15 @@ namespace BombPeliLib
         private void LeaveGame()
         {
             Console.WriteLine("Leaving game");
+
+            if (role == Role.HOST)
+            {
+                foreach(var p in peerInfos)
+                {
+                    p2p.Send(Channel.GAME, new { status = GameStatus.ENDED }, p.Address, p.Port);
+                }
+            }
+
             stateMachine.ChangeState(new GameListState(null, stateMachine, config));
         }
 

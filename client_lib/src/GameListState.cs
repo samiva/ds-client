@@ -41,21 +41,17 @@ namespace BombPeliLib
 
         }
 
-        void JoinGame()
+        void JoinGame(ulong gameID)
         {
+            var game = games.Find(i => i.Id == gameID);
+            P2PComm p2p = new P2PComm(config.GetUshort("localport"));
+            stateMachine.ChangeState(new GameLobbyState(stateMachine, game, config,p2p, Role.NORMAL));
         }
 
         void RefreshList()
         {
             Console.WriteLine("Refresh game list");
         }
-
-        void DisplayGameList()  
-        {
-
-        }
-
-        
 
     }
 }
