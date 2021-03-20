@@ -47,7 +47,7 @@ namespace BombPeli
 				return;
 			}
 			GameInfo game = ServiceDiscoveryClient.CreateNewGameInstance(gameName, config.GetUshort("localport"));
-			OnPublishGame?.Invoke (this, new PublishGameEventArgs (game));
+			OnPublishGame?.Invoke (this, new PublishGameEventArgs (game, ErrorMsgDisplay));
 		}
 
 		private void CancelButton_Click (object sender, RoutedEventArgs e) {

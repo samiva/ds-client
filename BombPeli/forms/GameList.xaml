@@ -60,6 +60,7 @@
             <Button x:Name="joingame" Content="Join game" Margin="10" Click="joingame_Click" Height="30"/>
             <Button x:Name="refresh" Content="Refresh" Margin="10" Click="refresh_Click" Height="30"/>
             <Button x:Name="quit" Content="Quit" Margin="10" Click="quit_Click" Height="30"/>
+            <Label x:Name="ErrorMsgDisplay" Content="" Height="200"/>
         </StackPanel>
 
     </Grid>

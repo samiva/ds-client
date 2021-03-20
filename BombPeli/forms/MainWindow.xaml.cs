@@ -29,6 +29,7 @@ namespace BombPeli
 		private ConfigureGame configGame;
 		private GameLobby lobby;
 
+		private P2Pplayer p2pClient;
 
 		public MainWindow () {
 			InitializeComponent ();
@@ -74,8 +75,60 @@ namespace BombPeli
 		}
 
 		public void JoinGameHandler (object sender, JoinGameEventArgs e) {
-			GameInfo game = e.game;
-			// TODO: Join P2P network and open lobby
+			
+			bool AbortJoin (GameInfo game, Label errorMsg) {
+				try {
+					p2pClient.SendQuitGame (game.Ip, game.Port);
+				} catch (Exception ex) {
+					errorMsg.Content = string.Format ("Failed to cancel join.\n{0}\n\n{1}", ex.Message, ex.StackTrace.ToString ());
+					return false;
+				}
+				return true;
+			}
+			
+			bool SendJoin (GameInfo game, Label errorMsg, in int MAX_RETRIES) {
+				bool success = false;
+				int i = 0;
+				do {
+					try {
+						p2pClient.SendJoinGame (game.Ip, game.Port);
+						success = true;
+					} catch (Exception ex) {
+						errorMsg.Content = string.Format ("Could not join game. Retrying...\n{0}\n\n{1}", ex.Message, ex.StackTrace.ToString ());
+					}
+					++i;
+				} while (!success && i < MAX_RETRIES);
+				return success;
+			}
+
+			bool FetchPeers (GameInfo game, Label errorMsg, in int MAX_RETRIES) {
+				bool success = false;
+				int i = 0;
+				do {
+					try {
+						// TODO: Fetch peer list
+						success = true;
+					} catch (Exception ex) {
+						errorMsg.Content = string.Format ("Could not fetch peer list. Retrying...\n{0}\n\n{1}", ex.Message, ex.StackTrace.ToString ());
+					}
+					++i;
+				} while (!success && i < MAX_RETRIES);
+				return success;
+			}
+
+			if (!InitP2PClient ()) {
+				return;
+			}
+			const int MAX_RETRIES = 3;
+			if (
+				!SendJoin (e.game, e.errorMsg, MAX_RETRIES)
+				|| !FetchPeers (e.game, e.errorMsg, MAX_RETRIES)
+			) {
+				AbortJoin (e.game, e.errorMsg);
+				return;
+			}
+
+
 			InitLobby ();
 			DisplayPage (lobby);
 		}
@@ -86,7 +139,11 @@ namespace BombPeli
 		}
 
 		public void PublishGameHandler (object sender, PublishGameEventArgs e) {
-			// Create P2P network and post it to service discovery server.
+			// Create P2P node and post it to service discovery server.
+			if (!InitP2PClient ()) {
+				return;
+			}
+
 			ServiceDiscoveryClient client = new ServiceDiscoveryClient(config);
 			try {
 				client.RegisterGame (e.game);
@@ -118,5 +175,21 @@ namespace BombPeli
 				*/
 			}
 		}
+
+		private bool InitP2PClient () {
+			if (p2pClient == null) {
+				ushort port = config.GetUshort ("localport");
+				P2PComm comm;
+				try {
+					comm = new P2PComm (port);
+				} catch (Exception e) {
+					MessageBox.Show (string.Format("Could not initiate P2P node.\n{0}\n\n{1}", e.Message, e.StackTrace.ToString ()));
+					return false;
+				}
+				p2pClient = new P2Pplayer (comm);
+			}
+			return true;
+		}
+
 	}
 }

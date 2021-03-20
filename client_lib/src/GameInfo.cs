@@ -30,6 +30,5 @@ namespace BombPeliLib
             Status = status;
         }
 
-        
     }
 }

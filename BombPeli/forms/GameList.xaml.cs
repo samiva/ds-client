@@ -89,7 +89,7 @@ namespace BombPeli
                 return;
             }
             if (games.Count > index) {
-                OnJoinGame?.Invoke (this, new JoinGameEventArgs (games[index]));
+                OnJoinGame?.Invoke (this, new JoinGameEventArgs (games[index], ErrorMsgDisplay));
             }
 		}
 

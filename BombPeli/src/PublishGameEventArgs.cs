@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Windows.Controls;
 
 using BombPeliLib;
 
@@ -8,9 +9,11 @@ namespace BombPeli
 	{
 
 		public GameInfo game;
+		public Label errorMsg;
 
-		public PublishGameEventArgs (GameInfo game) {
+		public PublishGameEventArgs (GameInfo game, Label errorMsg) {
 			this.game = game;
+			this.errorMsg = errorMsg;
 		}
 
 	}

@@ -1,13 +1,30 @@
-﻿namespace BombPeliLib
+﻿using System;
+using System.Collections.Generic;
+
+namespace BombPeliLib
 {
-    struct PeerInfo
+    public struct PeerInfo
     {
         public string Address { get; private set; }
         public int Port { get; private set; }
-        public PeerInfo(string address, int port)
-        {
+
+        public PeerInfo(string address, int port) {
             Address = address;
             Port = port;
         }
+
     }
+
+	public class PeerInfoComparer : IEqualityComparer<PeerInfo>
+	{
+		public bool Equals (PeerInfo a, PeerInfo b) {
+            return
+                a.Address == b.Address
+                && a.Port == b.Port;
+		}
+
+		public int GetHashCode (PeerInfo obj) {
+            return HashCode.Combine<string, int> (obj.Address, obj.Port);
+		}
+	}
 }

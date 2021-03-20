@@ -5,7 +5,7 @@ namespace BombPeliLib
 {
 	public class P2Pplayer
 	{
-		private P2PComm p2p;
+		private readonly P2PComm p2p;
 
 		public P2Pplayer (P2PComm p2p) {
 			this.p2p = p2p;
@@ -27,9 +27,9 @@ namespace BombPeliLib
 
 		private void ProcessGameDataMsg (P2PCommEventArgs e) {
 			if (e.Data is object data) {
-				Type dataType = data.GetType ();
-				PropertyInfo bomb = dataType.GetProperty ("bomb", typeof (bool));
-				PropertyInfo status = dataType.GetProperty ("status", typeof (GameStatus));
+				Type dataType			= data.GetType ();
+				PropertyInfo bomb		= dataType.GetProperty ("bomb", typeof (bool));
+				PropertyInfo status		= dataType.GetProperty ("status", typeof (GameStatus));
 				if (bomb == null || status == null) {
 					return;
 				}
@@ -72,6 +72,7 @@ namespace BombPeliLib
 			}, address, port);
 		}
 
+		// Send when game is won and ends
 		public void SendEndGame (string address, int port) {
 			p2p.Send (Channel.GAME, new {
 				bomb = false,
@@ -85,6 +86,7 @@ namespace BombPeliLib
 			}, address, port);
 		}
 
+		// Send when client leaves network
 		public void SendQuitGame (string address, int port) {
 			p2p.Send (Channel.MANAGEMENT, new {
 				msg = "quit"
