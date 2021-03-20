@@ -20,11 +20,11 @@ namespace BombPeli
 	/// <summary>
 	/// Interaction logic for GameLobby.xaml
 	/// </summary>
-	public partial class GameLobby : Page
+	public partial class GameLobby : Page, IChangePage
 	{
 
 		public delegate void StartGameEventHandler (object sender, StartGameEventArgs e);
-		public delegate void LeaveGameEventHandler (object sender, LeaveGameEventArgs e);
+		public delegate void LeaveGameEventHandler (object sender, LeaveGameLobbyEventArgs e);
 		public event StartGameEventHandler OnStartGame;
 		public event LeaveGameEventHandler OnLeaveGame;
 
@@ -34,15 +34,20 @@ namespace BombPeli
 			InitializeComponent ();
 		}
 
-		public void Init (GameLobbyState lobby) {
-			this.lobby = lobby;
+		public void Init (State state) {
+			this.lobby = state as GameLobbyState;
 
 			ListBoxPeers.DataContext = this;
+			ListBoxPeers.ItemsSource = Peers;
 			ViewControls.Children.Clear ();
 			if (lobby.IsHost) {
 				ViewControls.Children.Add (MakeStartButton ());
 			}
 			ViewControls.Children.Add (MakeQuitButton ());
+		}
+
+		public void Clear () {
+			lobby = null;
 		}
 
 		public List<PeerInfo> Peers {
@@ -70,7 +75,7 @@ namespace BombPeli
 		}
 
 		private void quit_Click (object sender, RoutedEventArgs e) {
-			OnLeaveGame?.Invoke (this, new LeaveGameEventArgs (lobby));
+			OnLeaveGame?.Invoke (this, new LeaveGameLobbyEventArgs (lobby));
 		}
 
 	}

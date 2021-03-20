@@ -20,7 +20,7 @@ namespace BombPeli
 	/// <summary>
 	/// Interaction logic for ConfigureGame.xaml
 	/// </summary>
-	public partial class ConfigureGame : Page
+	public partial class ConfigureGame : Page, IChangePage
 	{
 
 		public delegate void PublishGameEventHandler (object sender, PublishGameEventArgs e);
@@ -35,6 +35,12 @@ namespace BombPeli
 			InitializeComponent ();
 			this.configState = configState;
 			this.config = config;
+		}
+
+		public void Init (State state) {
+		}
+
+		public void Clear () {
 		}
 
 		private void PublishButton_Click (object sender, RoutedEventArgs e) {

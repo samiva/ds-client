@@ -21,7 +21,7 @@ namespace BombPeli
     /// <summary>
     /// Interaction logic for GameList.xaml
     /// </summary>
-    public partial class GameList : Page
+    public partial class GameList : Page, IChangePage
     {
 
         public delegate void GameListEventHandler (object sender, EventArgs e);
@@ -46,6 +46,13 @@ namespace BombPeli
             get {
                 return gameViews;
             }
+        }
+
+        public void Init (State state) {
+        }
+
+        public void Clear () {
+            
         }
 
         private void MakeViews () {

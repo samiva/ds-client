@@ -11,9 +11,9 @@ namespace BombPeliLib
 			this.config = config;
 		}
 
-		public void PublishGame (GameInfo game) {
+		public GameInfo PublishGame (GameInfo game) {
 			ServiceDiscoveryClient service = new ServiceDiscoveryClient(config);
-			service.RegisterGame (game);
+			return service.RegisterGame (game);
 		}
 
 	}

@@ -16,10 +16,10 @@ namespace BombPeliLib
 		GAME = 0x03
 	};
 
-	public class P2PComm
-	{
+	public class P2PComm {
 
-		private readonly UDPManager udpm;
+		private UDPManager udpm;
+
 		public int Port {
 			get; private set;
 		}
@@ -49,6 +49,11 @@ namespace BombPeliLib
 
 		public void Send (Channel channel, object data, string address, int port) {
 			udpm.Send (Enum.GetName<Channel>(channel), data, address, port);
+		}
+
+		public void Close () {
+			udpm.Reset ();
+			udpm = null;
 		}
 
 		private void UDPManagerBoundHandler (UDPManagerEvent e) {

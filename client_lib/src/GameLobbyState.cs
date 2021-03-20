@@ -3,7 +3,8 @@ using System.Collections.Generic;
 
 namespace BombPeliLib
 {
-	public class GameLobbyState {
+	public class GameLobbyState : State
+	{
 
 		private Config config;
 		private GameInfo gameInfo;
@@ -23,8 +24,7 @@ namespace BombPeliLib
 		}
 
 		~GameLobbyState () {
-			this.client.JoinReceived -= HandlePeerJoin;
-			this.client.QuitReceived -= HandlePeerLeave;
+			Destroy ();
 		}
 
 		public List<PeerInfo> Peers {
@@ -57,7 +57,7 @@ namespace BombPeliLib
 					GameStatus status = e.Data.status;
 					if (status == GameStatus.RUNNING) {
 					} else if (status == GameStatus.ENDED) {
-						LeaveGame ();
+						LeaveLobby ();
 					}
 					break;
 			}
@@ -76,14 +76,15 @@ namespace BombPeliLib
 				foreach (PeerInfo p in peerInfos) {
 					client.SendStartGame (p.Address, p.Port);
 				}
+				Destroy ();
 			}
 		}
 
-		public void LeaveGame () {
+		public void LeaveLobby () {
 			if (isHost) {
 				TerminateGame ();
 			}
-			LeaveLobby ();
+			Destroy ();
 		}
 
 		private void TerminateGame () {
@@ -94,9 +95,13 @@ namespace BombPeliLib
 			service.DeregisterGame (gameInfo);
 		}
 
-		private void LeaveLobby () {
-			
+		private void Destroy () {
+			if (client == null) {
+				return;
+			}
+			client.JoinReceived -= HandlePeerJoin;
+			client.QuitReceived -= HandlePeerLeave;
+			client = null;
 		}
-
 	}
 }

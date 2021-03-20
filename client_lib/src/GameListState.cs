@@ -5,7 +5,7 @@ using kevincastejon;
 
 namespace BombPeliLib
 {
-	public class GameListState
+	public class GameListState : State
 	{
 		private List<GameInfo> games;
 		private Config config;

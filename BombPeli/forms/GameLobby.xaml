@@ -49,7 +49,6 @@
                  x:Name="ListBoxPeers"
                  Template="{StaticResource GameListHeader}"
                  ItemTemplate="{StaticResource GameListItem}"
-                 ItemsSource="{Binding Peers}"
                  VerticalAlignment="Top"
                  Margin="10"
                  />

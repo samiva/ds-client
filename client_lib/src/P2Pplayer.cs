@@ -93,6 +93,10 @@ namespace BombPeliLib
 			}, address, port);
 		}
 
+		public void Close () {
+			p2p.Close ();
+		}
+
 		private void OnGameStartReceived (P2PCommEventArgs e) {
 			GameStartReceived?.Invoke (this, e);
 		}

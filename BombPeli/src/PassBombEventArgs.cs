@@ -8,11 +8,11 @@ using BombPeliLib;
 
 namespace BombPeli
 {
-	public class LeaveGameEventArgs
+	public class PassBombEventArgs
 	{
 		public GameState game;
 
-		public LeaveGameEventArgs (GameState game) {
+		public PassBombEventArgs (GameState game) {
 			this.game = game;
 		}
 

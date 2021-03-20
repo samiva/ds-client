@@ -17,18 +17,18 @@ using BombPeliLib;
 
 namespace BombPeli
 {
-    /// <summary>
-    /// Interaction logic for Init.xaml
-    /// </summary>
-    public partial class Init : Page
-    {
+	/// <summary>
+	/// Interaction logic for Init.xaml
+	/// </summary>
+	public partial class Bootstrap : Page, IChangePage
+	{
 
 		public delegate void InitCompleteHandler (object sender, EventArgs e);
 		public event InitCompleteHandler OnInitComplete;
 
-	    public Init () {
-            InitializeComponent ();
-	    }
+		public Bootstrap () {
+			InitializeComponent ();
+		}
 
 		public Config Config {
 			get; private set;
@@ -36,6 +36,12 @@ namespace BombPeli
 
 		public List<GameInfo> Games {
 			get; private set;
+		}
+
+		public void Init (State state) {
+		}
+
+		public void Clear () {
 		}
 
 		private void Page_Loaded (object sender, RoutedEventArgs e) {

@@ -8,12 +8,12 @@ using BombPeliLib;
 
 namespace BombPeli
 {
-	public class LeaveGameEventArgs
+	public class LeaveGameLobbyEventArgs : EventArgs
 	{
-		public GameState game;
+		public readonly GameLobbyState lobby;
 
-		public LeaveGameEventArgs (GameState game) {
-			this.game = game;
+		public LeaveGameLobbyEventArgs (GameLobbyState lobby) {
+			this.lobby = lobby;
 		}
 
 	}
