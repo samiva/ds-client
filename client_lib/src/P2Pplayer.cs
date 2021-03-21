@@ -1,11 +1,14 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Reflection;
+using System.Linq;
 
 namespace BombPeliLib
 {
 	public class P2Pplayer
 	{
 		private readonly P2PComm p2p;
+		private List<PeerInfo> peers;
 
 		public P2Pplayer (P2PComm p2p) {
 			this.p2p = p2p;
@@ -48,14 +51,27 @@ namespace BombPeliLib
 		}
 
 		private void ProcessManagementDataMsg (P2PCommEventArgs e) {
+			Console.WriteLine("MANAGEMENT MSG");
 			dynamic tmp = e.Data.msg;
+			Console.WriteLine(tmp);
+			Console.WriteLine(tmp.Equals("quit", StringComparison.OrdinalIgnoreCase));
 			if (tmp is string msg) {
 				if (msg.Equals ("join", StringComparison.OrdinalIgnoreCase)) {
 					OnJoinReceived (e);
 				} else if (msg.Equals ("quit", StringComparison.OrdinalIgnoreCase)) {
+					Console.WriteLine("QUIT MSG");
 					OnQuitReceived (e);
 				}
-			}
+				else if(msg.Equals("list_peers", StringComparison.OrdinalIgnoreCase))
+                {
+					Console.WriteLine("PEER REQUEST");
+					OnListPeers(e);
+				}
+			} else if (tmp is List<PeerInfo> p)
+            {
+				Console.WriteLine("Peers received");
+				peers = p;
+            }
 		}
 
 		public void SendBomb (string address, int port) {
@@ -93,6 +109,10 @@ namespace BombPeliLib
 			}, address, port);
 		}
 
+		public void SendPeerRequest(string address, int port)
+        {
+			p2p.Send(Channel.MANAGEMENT, new { msg = "list_peers" }, address, port);
+        }
 		private void OnGameStartReceived (P2PCommEventArgs e) {
 			GameStartReceived?.Invoke (this, e);
 		}
@@ -113,5 +133,24 @@ namespace BombPeliLib
 			GameEndReceived?.Invoke (this, e);
 		}
 
-	}
+		private void AddPeer(string address, int port)
+        {
+			PeerInfo pi = new PeerInfo(address, port);
+			if(peers.Contains(pi,new PeerInfoComparer()))
+			{ 
+				peers.Add(pi);
+			}
+        }
+
+		private void RemovePeer(string address, int port)
+        {
+			peers.Remove(new PeerInfo(address, port));
+        }
+
+        private void OnListPeers(P2PCommEventArgs e)
+        {
+			p2p.Send(Channel.MANAGEMENT, new { msg = peers }, e.RemoteAddress, e.RemotePort);
+        }
+
+    }
 }
