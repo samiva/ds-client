@@ -21,7 +21,7 @@ namespace BombPeli
     /// <summary>
     /// Interaction logic for GameList.xaml
     /// </summary>
-    public partial class GameList : Page
+    public partial class GameList : Page, IChangePage
     {
 
         public delegate void GameListEventHandler (object sender, EventArgs e);
@@ -30,13 +30,13 @@ namespace BombPeli
         public event JoinGameEventHandler OnJoinGame;
         public event GameListEventHandler OnQuit;
 
-        private List<GameInfo> games;
+        private GameListState gameList;
         private Config config;
         private ObservableCollection<GameInfoView> gameViews = new ObservableCollection<GameInfoView> ();
 
-        public GameList (List<GameInfo> games, Config config) {
+        public GameList (GameListState gameList, Config config) {
 		    InitializeComponent ();
-            this.games = games;
+            this.gameList = gameList;
             this.config = config;
             MakeViews ();
             ListBoxGames.DataContext = this;
@@ -48,11 +48,19 @@ namespace BombPeli
             }
         }
 
+        public void Init (State state) {
+        }
+
+        public void Clear () {
+            
+        }
+
         private void MakeViews () {
             /*
                 MEMO: Likely awful performance for more than a few items long collections.
                 Reason being the large number of events that will be fired upon execution.
             */
+            List<GameInfo> games = gameList.Games;
             games.Add (new GameInfo (123, "asd", "12341234", 1234, GameStatus.ENDED));
             int gameCount = games.Count;
             int viewCount = gameViews.Count;
@@ -88,8 +96,8 @@ namespace BombPeli
                 MessageBox.Show ("Select game to join from the list.");
                 return;
             }
-            if (games.Count > index) {
-                OnJoinGame?.Invoke (this, new JoinGameEventArgs (games[index], ErrorMsgDisplay));
+            if (gameList.Games.Count > index) {
+                OnJoinGame?.Invoke (this, new JoinGameEventArgs (gameList, gameList.Games [index], ErrorMsgDisplay));
             }
 		}
 
@@ -102,7 +110,7 @@ namespace BombPeli
                 MessageBox.Show (string.Format ("Failed to refresh game list.\n{0}\n\n{1}", ex.Message, ex.StackTrace.ToString ()));
                 return;
             }
-            this.games = games;
+            gameList.Games = games;
             MakeViews ();
 		}
 

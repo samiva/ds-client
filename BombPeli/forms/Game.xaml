@@ -1,0 +1,23 @@
+﻿<Page x:Class="BombPeli.Game"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+      xmlns:local="clr-namespace:BombPeli"
+      mc:Ignorable="d" 
+      d:DesignHeight="450" d:DesignWidth="800"
+      Title="Game">
+
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="2*" />
+            <ColumnDefinition Width="1*" />
+        </Grid.ColumnDefinitions>
+        
+        <Image Grid.Column="0" x:Name="image" Height="200" Width="200"/>
+        <StackPanel Grid.Column="1">
+            <Button x:Name="passbomb" Content="Pass bomb" Margin="10" Height="30" Click="passbomb_Click"/>
+            <Button x:Name="quit" Content="Leave game" Margin="10" Height="30" Click="quit_Click"/>
+        </StackPanel>
+    </Grid>
+</Page>

@@ -113,6 +113,10 @@ namespace BombPeliLib
         {
 			p2p.Send(Channel.MANAGEMENT, new { msg = "list_peers" }, address, port);
         }
+		public void Close () {
+			p2p.Close ();
+		}
+
 		private void OnGameStartReceived (P2PCommEventArgs e) {
 			GameStartReceived?.Invoke (this, e);
 		}

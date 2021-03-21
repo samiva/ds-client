@@ -2,46 +2,19 @@ using System;
 
 namespace BombPeliLib
 {
-    class ConfigGameState : State 
-    {
+	public class ConfigGameState
+	{
 
-        private Config config;
-        private P2PComm p2p;
+		private Config config;
 
-        public ConfigGameState(StateMachine sm, Config config, P2PComm p2p): base(sm)
-        {
-            this.config = config;
-            this.p2p = p2p;
-        }
+		public ConfigGameState (Config config) {
+			this.config = config;
+		}
 
-        public override void BeginState()
-        {
-        }
+		public GameInfo PublishGame (GameInfo game) {
+			ServiceDiscoveryClient service = new ServiceDiscoveryClient(config);
+			return service.RegisterGame (game);
+		}
 
-        public override void ProcessState()
-        {
-            PublishGame();
-        }
-
-        public override void EndState()
-        {
-        }
-
-        private void PublishGame() 
-        {
-
-            GameInfo gi = AskGameInfo();
-            // Game info to discovery server
-            stateMachine.ChangeState(new GameLobbyState(stateMachine, gi, config, p2p, Role.HOST));
-       
-        }
-
-        private GameInfo AskGameInfo()
-        {
-            Console.Write("Input game name: ");
-            var gameName=Console.ReadLine();
-            Console.WriteLine("the name of new game {0}", gameName);
-            return ServiceDiscoveryClient.CreateNewGameInstance (gameName, config.GetUshort ("localport"));
-        }
-    }
+	}
 }

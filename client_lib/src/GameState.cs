@@ -1,49 +1,45 @@
 namespace BombPeliLib
 {
-    class GameState : State
-    {
-        private P2PComm p2p;
-        private bool bomb = false;
-        public GameState(StateMachine sm, P2PComm p2p) :base(sm)
-        {
-            this.p2p = p2p;
-            this.p2p.DataReceived += P2p_DataReceived;
-        }
+	public class GameState : State
+	{
+		private P2Pplayer client;
+		private bool hasBomb = false;
+		private long bombTime;
 
-        private void P2p_DataReceived(object sender, P2PCommEventArgs e)
-        {
-            if(e.MessageChannel == Channel.GAME)
-            {
-               bomb = e.Data.bomb;
-            }
-        }
+		public GameState (P2Pplayer p2p) {
+			this.client = p2p;
+		}
 
-        public override void BeginState()
-        {
-            throw new System.NotImplementedException();
-        }
+		~GameState () {
+			Destroy ();
+		}
 
-        public override void ProcessState()
-        {
-            if (bomb)
-            {
-                PassBomb();
-            }
-        }
+		public void ReceiveBomb () {
+			hasBomb = true;
+		}
 
-        public override void EndState()
-        {
-            p2p.DataReceived -= P2p_DataReceived;
-        }
+		public void PassBomb () {
+			if (!hasBomb) {
+				return;
+			}
+			// TODO: Get random peer
+			// client.SendBomb ();
+			hasBomb = false;
+		}
 
-        void PassBomb()
-        {
-            //p2p.Send(Channel.GAME, new { bomb = this.bomb }, )
-        }
+		public void LeaveGame () {
+			Destroy ();
+		}
 
-        void LeaveGame() 
-        {
+		public void FailPassBomb () {
+			hasBomb = true;
+		}
 
-        }
-    }
+		private void Destroy () {
+			if (client == null) {
+				return;
+			}
+			client = null;
+		}
+	}
 }

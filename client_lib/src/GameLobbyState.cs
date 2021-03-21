@@ -3,113 +3,105 @@ using System.Collections.Generic;
 
 namespace BombPeliLib
 {
-    class GameLobbyState :State
-    {
+	public class GameLobbyState : State
+	{
 
-        private Config config;
-        private GameInfo gameInfo;
-        private List<PeerInfo> peerInfos;
-        private P2PComm p2p;
-        private Role role; 
+		private Config config;
+		private GameInfo gameInfo;
+		private List<PeerInfo> peerInfos;
+		private P2Pplayer client;
+		private bool isHost;
 
-        public GameLobbyState(StateMachine sm, GameInfo gi, Config config, P2PComm p2p, Role role)
-            : base(sm)
-        {
-            this.gameInfo = gi;
-            this.config = config;
-            this.p2p = p2p;
-            this.role = role;
-            
-        }
+		public GameLobbyState (GameInfo gi, List<PeerInfo> peers, Config config, P2Pplayer p2p, bool isHost) {
+			this.gameInfo = gi;
+			this.peerInfos = peers;
+			this.config = config;
+			this.client = p2p;
+			this.isHost = isHost;
 
-        private void P2p_DataReceived(object sender, P2PCommEventArgs e)
-        {
-            if (e.MessageChannel == Channel.MANAGEMENT)
-            {
-                if(role==Role.HOST && peerInfos.Count <= config.GetInt("maxpeer"))
-                {
-                    PeerInfo peer = new PeerInfo(e.RemoteAddress, e.RemotePort);
-                    peerInfos.Add(peer);
-                }
-            }
-            else if(e.MessageChannel==Channel.GAME)
-            {
-                GameStatus status = e.Data.status;
-                if (status == GameStatus.RUNNING)
-                {
-                    stateMachine.ChangeState(new GameState(stateMachine, p2p));
-                }
-                else if (status == GameStatus.ENDED)
-                {
-                    //stateMachine.ChangeState(new GameListState(null, stateMachine, config));
-                    LeaveGame();
-                }
-            }
-        }
+			this.client.JoinReceived += HandlePeerJoin;
+			this.client.QuitReceived += HandlePeerLeave;
+		}
 
-        public override void BeginState()
-        {
-            peerInfos = new List<PeerInfo>();
-            p2p.DataReceived += P2p_DataReceived;
-        }
+		~GameLobbyState () {
+			Destroy ();
+		}
 
-        public override void ProcessState()
-        {
-            //DisplayMenu();
+		public List<PeerInfo> Peers {
+			get {
+				return peerInfos;
+			}
+		}
 
-            //int choice = int.Parse(Console.ReadLine());
+		public bool IsHost {
+			get {
+				return isHost;
+			}
+		}
 
-            //switch (choice)
-            //{
-            //    case 1:
-            //        StartGame();
-            //        break;
-            //    case 2:
-            //        LeaveGame();
-            //        break;
-            //    default:
-            //        break;
-            //}
-        }
+		public GameInfo Game {
+			get {
+				return gameInfo;
+			}
+		}
 
-        public override void EndState()
-        {
-            p2p.DataReceived -= P2p_DataReceived;
-        }
+		private void P2p_DataReceived (object sender, P2PCommEventArgs e) {
+			switch (e.MessageChannel) {
+				case Channel.MANAGEMENT:
+					if (isHost && peerInfos.Count <= config.GetInt ("maxpeer")) {
+						PeerInfo peer = new PeerInfo(e.RemoteAddress, e.RemotePort);
+						peerInfos.Add (peer);
+					}
+					break;
+				case Channel.GAME:
+					GameStatus status = e.Data.status;
+					if (status == GameStatus.RUNNING) {
+					} else if (status == GameStatus.ENDED) {
+						LeaveLobby ();
+					}
+					break;
+			}
+		}
 
-        private void StartGame()
-        {
-            // I AM THE ONE HOSTING GAME
-            // Inform peers
-            foreach(var pi in peerInfos)
-            {
-                p2p.Send(Channel.GAME, new { status=GameStatus.RUNNING}, pi.Address, pi.Port);
-            }
-            stateMachine.ChangeState(new GameState(stateMachine, p2p));
-        }
+		private void HandlePeerJoin (object sender, P2PCommEventArgs e) {
+			
+		}
 
-        private void LeaveGame()
-        {
-            Console.WriteLine("Leaving game");
+		private void HandlePeerLeave (object sender, P2PCommEventArgs e) {
 
-            if (role == Role.HOST)
-            {
-                foreach(var p in peerInfos)
-                {
-                    p2p.Send(Channel.GAME, new { status = GameStatus.ENDED }, p.Address, p.Port);
-                }
-            }
+		}
 
-            stateMachine.ChangeState(new GameListState(null, stateMachine, config));
-        }
+		public void StartGame () {
+			if (isHost) {
+				foreach (PeerInfo p in peerInfos) {
+					client.SendStartGame (p.Address, p.Port);
+				}
+				Destroy ();
+			}
+		}
 
-        private void DisplayMenu()
-        {
-            Console.WriteLine("1) Start game");
-            Console.WriteLine("2) Leave game");
+		public void LeaveLobby () {
+			if (isHost) {
+				TerminateGame ();
+			}
+			Destroy ();
+		}
 
+		private void TerminateGame () {
+			foreach (PeerInfo p in peerInfos) {
+				client.SendQuitGame (p.Address, p.Port);
+			}
+			ServiceDiscoveryClient service = new ServiceDiscoveryClient (config);
+			service.DeregisterGame (gameInfo);
+		}
 
-        }
-
-    }
+		private void Destroy () {
+			if (client == null) {
+				return;
+			}
+			client.JoinReceived -= HandlePeerJoin;
+			client.QuitReceived -= HandlePeerLeave;
+			client = null;
+		}
+	}
 }

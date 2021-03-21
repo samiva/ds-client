@@ -20,7 +20,7 @@ namespace BombPeli
 	/// <summary>
 	/// Interaction logic for ConfigureGame.xaml
 	/// </summary>
-	public partial class ConfigureGame : Page
+	public partial class ConfigureGame : Page, IChangePage
 	{
 
 		public delegate void PublishGameEventHandler (object sender, PublishGameEventArgs e);
@@ -29,10 +29,18 @@ namespace BombPeli
 		public event CancelCreateGameEventHandler OnCancelCreateGame;
 
 		private Config config;
+		private ConfigGameState configState;
 
-		public ConfigureGame (Config config) {
+		public ConfigureGame (ConfigGameState configState, Config config) {
 			InitializeComponent ();
+			this.configState = configState;
 			this.config = config;
+		}
+
+		public void Init (State state) {
+		}
+
+		public void Clear () {
 		}
 
 		private void PublishButton_Click (object sender, RoutedEventArgs e) {
@@ -47,7 +55,7 @@ namespace BombPeli
 				return;
 			}
 			GameInfo game = ServiceDiscoveryClient.CreateNewGameInstance(gameName, config.GetUshort("localport"));
-			OnPublishGame?.Invoke (this, new PublishGameEventArgs (game, ErrorMsgDisplay));
+			OnPublishGame?.Invoke (this, new PublishGameEventArgs (configState, game, ErrorMsgDisplay));
 		}
 
 		private void CancelButton_Click (object sender, RoutedEventArgs e) {
