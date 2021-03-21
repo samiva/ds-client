@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Reflection;
 using System.Linq;
+using Newtonsoft.Json;
 
 namespace BombPeliLib
 {
@@ -13,6 +14,7 @@ namespace BombPeliLib
 		public P2Pplayer (P2PComm p2p) {
 			this.p2p = p2p;
 			this.p2p.DataReceived += P2p_DataReceived;
+			peers = new List<PeerInfo>();
 		}
 
 		public event EventHandler<P2PCommEventArgs> GameStartReceived;
@@ -53,9 +55,11 @@ namespace BombPeliLib
 		private void ProcessManagementDataMsg (P2PCommEventArgs e) {
 			Console.WriteLine("MANAGEMENT MSG");
 			dynamic tmp = e.Data.msg;
-			Console.WriteLine(tmp);
-			Console.WriteLine(tmp.Equals("quit", StringComparison.OrdinalIgnoreCase));
-			if (tmp is string msg) {
+			//Console.WriteLine(tmp.ToString());
+			//Console.WriteLine(tmp.Equals("quit", StringComparison.OrdinalIgnoreCase));
+			string t = (string)tmp; // tmp.ToString(); // Can as string be used?
+			
+			if (t is string msg) {
 				if (msg.Equals ("join", StringComparison.OrdinalIgnoreCase)) {
 					OnJoinReceived (e);
 				} else if (msg.Equals ("quit", StringComparison.OrdinalIgnoreCase)) {
@@ -67,11 +71,14 @@ namespace BombPeliLib
 					Console.WriteLine("PEER REQUEST");
 					OnListPeers(e);
 				}
-			} else if (tmp is List<PeerInfo> p)
-            {
-				Console.WriteLine("Peers received");
-				peers = p;
-            }
+				else if(msg.Equals("peers", StringComparison.OrdinalIgnoreCase))
+                {
+					Console.WriteLine("PEER LIST RECEIVED");
+					string peermsg = e.Data.peerlist.ToString();
+					OnPeerListReceived(peermsg);
+					Console.WriteLine(peermsg);
+                }
+			} 
 		}
 
 		public void SendBomb (string address, int port) {
@@ -153,7 +160,21 @@ namespace BombPeliLib
 
         private void OnListPeers(P2PCommEventArgs e)
         {
-			p2p.Send(Channel.MANAGEMENT, new { msg = peers }, e.RemoteAddress, e.RemotePort);
+			peers.Add(new PeerInfo("127.0.0.1", 666));
+			peers.Add(new PeerInfo("156.272.488.60", 8888));
+			string json = JsonConvert.SerializeObject(peers, Formatting.Indented);
+			p2p.Send(Channel.MANAGEMENT, new { msg = "peers", peerlist=json }, e.RemoteAddress, e.RemotePort);
+			Console.WriteLine("PEERS SENT");
+        }
+
+        private void OnPeerListReceived(string peermsg)
+        {
+			var p = JsonConvert.DeserializeObject<List<PeerInfo>>(peermsg);
+			//Console.WriteLine(p.Count);
+			//foreach(var i in p)
+   //         {
+			//	Console.WriteLine(String.Format("{0}:{1}", i.Address, i.Port));
+   //         }
         }
 
     }
