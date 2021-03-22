@@ -14,19 +14,19 @@ namespace BombPeli
 		static private P2PClient instance;
 		public P2Pplayer client;
 
-		private P2PClient (Config config, bool isHost, GameInfo currentGame) {
+		private P2PClient (Config config, bool isHost) {
 			ushort port = config.GetUshort ("localport");
 			P2PComm comm = new P2PComm (port);
-			client = new P2Pplayer (comm, isHost, currentGame);
+			client = new P2Pplayer (comm, isHost);
 		}
 
 		~P2PClient () {
 			Destroy ();
 		}
 
-		static public void Create (Config config, bool isHost, GameInfo currentGame) {
+		static public void Create (Config config, bool isHost) {
 			Release ();
-			instance = new P2PClient (config, isHost, currentGame);
+			instance = new P2PClient (config, isHost);
 		}
 
 		static public P2PClient Instance () {

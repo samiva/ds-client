@@ -44,6 +44,10 @@ namespace BombPeli
 		public void Clear () {
 		}
 
+		public State GetState () {
+			return null;
+		}
+
 		private void Page_Loaded (object sender, RoutedEventArgs e) {
 			string [] args = Environment.GetCommandLineArgs ();
 			string configFile = "config.ini";

@@ -52,7 +52,7 @@
 		/// <param name="remotePort">The IPV4 port of the sender or the target</param>
 		/// <param name="data">A <see cref="JavaScriptObject"/> that contains the data sent or received</param>
 		/// <param name="ID">A unique ID for this message</param>
-		internal UDPDataInfo (string channelName, string remoteAddress, int remotePort, object data, int ID) {
+		public UDPDataInfo (string channelName, string remoteAddress, int remotePort, object data, int ID) {
 			this._channelName = channelName;
 			this._ID = ID;
 			this._data = data;

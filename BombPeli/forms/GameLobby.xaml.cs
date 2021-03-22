@@ -23,6 +23,11 @@ namespace BombPeli
 	public partial class GameLobby : Page, IChangePage
 	{
 
+		public delegate void StartGameEventHandler (object sender, GameStartEventArgs e);
+		public delegate void LeaveLobbyEventHandler (object sender, EventArgs e);
+		public event StartGameEventHandler StartGame;
+		public event LeaveLobbyEventHandler LeaveLobby;
+
 		private GameLobbyState lobby;
 
 		public GameLobby () {
@@ -43,6 +48,10 @@ namespace BombPeli
 
 		public void Clear () {
 			lobby = null;
+		}
+
+		public State GetState () {
+			return lobby;
 		}
 
 		public List<PeerInfo> Peers {
@@ -70,11 +79,11 @@ namespace BombPeli
 		}
 
 		private void start_Click (object sender, RoutedEventArgs e) {
-			lobby.InvokeStartGame ();
+			StartGame?.Invoke (this, new GameStartEventArgs (lobby.BombTime));
 		}
 
 		private void quit_Click (object sender, RoutedEventArgs e) {
-			lobby.InvokeLeaveLobby ();
+			LeaveLobby?.Invoke (this, e);
 		}
 
 		public void PeerListChangedHandler (object sender, EventArgs e) {

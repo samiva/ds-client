@@ -6,26 +6,16 @@ namespace BombPeliLib
 	public class GameLobbyState : State
 	{
 
-		public delegate void StartGameEventHandler (object sender, StartGameEventArgs e);
-		public delegate void LeaveGameLobbyEventHandler (object sender, LeaveGameLobbyEventArgs e);
-		public event StartGameEventHandler StartGame;
-		public event LeaveGameLobbyEventHandler LeaveLobby;
-
 		private Config config;
 		private GameInfo gameInfo;
 		private P2Pplayer client;
+		private int bombTime;
 
 		public GameLobbyState (GameInfo gi, Config config, P2Pplayer p2p) {
 			this.gameInfo = gi;
 			this.config = config;
 			this.client = p2p;
-			if (client.IsHost) {
-				client.PeerJoined += PeerJoinedHandler;
-				client.PeerQuit += PeerLeftHandler;
-			} else {
-				client.GameStartReceived += StartGameHandler;
-				client.PeerQuit += LeaveGameLobbyHandler;
-			}
+			this.bombTime = config.GetInt ("bomb_lifetime");
 		}
 
 		~GameLobbyState () {
@@ -50,25 +40,13 @@ namespace BombPeliLib
 			}
 		}
 
-		public void InvokeStartGame () {
-			StartGame?.Invoke (this, new StartGameEventArgs (this));
-		}
-
-		public void InvokeLeaveLobby () {
-			LeaveLobby?.Invoke (this, new LeaveGameLobbyEventArgs (this));
-		}
-
-		public void DoStartGame () {
-			if (!client.IsHost) {
-				return;
+		public int BombTime {
+			get {
+				return bombTime;
 			}
-			foreach (PeerInfo p in client.Peers) {
-				client.SendStartGame (p.Address, p.Port);
-			}
-			Destroy (false);
 		}
 
-		public void DoLeaveLobby () {
+		public void LeaveLobby () {
 			if (client?.IsHost == true) {
 				TerminateGame ();
 			} else {
@@ -81,24 +59,27 @@ namespace BombPeliLib
 			client.BroadcastPeerJoin (e.RemoteAddress, e.RemotePort);
 		}
 
+		public bool IsHostPeer (string address, int port) {
+			return address == gameInfo.Ip && port == gameInfo.Port;
+		}
+
 		public void PeerLeftHandler (object sender, P2PCommEventArgs e) {
-			client.BroadcastPeerQuit (e.RemoteAddress, e.RemotePort);
+			if (client.IsHost) {
+				client.BroadcastPeerQuit (e.RemoteAddress, e.RemotePort);
+			}
 		}
 
-		public void StartGameHandler (object sender, P2PCommEventArgs e) {
-			InvokeStartGame ();
-		}
-
-		public void LeaveGameLobbyHandler (object sender, P2PCommEventArgs e) {
-			InvokeLeaveLobby ();
+		public void StartGameHandler (object sender, GameStartEventArgs e) {
+			this.bombTime = e.bombTime;
+			Destroy (false);
 		}
 
 		private void TerminateGame () {
+			ServiceDiscoveryClient service = new ServiceDiscoveryClient (config);
+			service.DeregisterGame (gameInfo);
 			foreach (PeerInfo p in client.Peers) {
 				client.SendQuitGame (p.Address, p.Port);
 			}
-			ServiceDiscoveryClient service = new ServiceDiscoveryClient (config);
-			service.DeregisterGame (gameInfo);
 		}
 
 		private void Destroy (bool closeClient) {
@@ -107,14 +88,11 @@ namespace BombPeliLib
 			if (c == null) {
 				return;
 			}
-			if (c.IsHost) {
-				c.PeerJoined -= PeerJoinedHandler;
-				c.PeerQuit -= PeerLeftHandler;
-			}
 			if (closeClient) {
 				client.Close ();
 			}
 			client = null;
 		}
+
 	}
 }

@@ -11,26 +11,30 @@ namespace BombPeliLib
 	public class P2Pplayer
 	{
 
-		public event EventHandler<P2PCommEventArgs> GameStartReceived;
-		public event EventHandler<P2PCommEventArgs> GameEndReceived;
-		public event EventHandler<P2PCommEventArgs> BombReceived;
+		public delegate void StartGameEventHandler (object sender, GameStartEventArgs e);
+		public delegate void BombReceivedEventHandler (object sender, BombReceivedEventArgs e);
+
+		public event StartGameEventHandler GameStartReceived;
+		public event EventHandler<P2PCommEventArgs> PeerLostReceived;
+		public event BombReceivedEventHandler BombReceived;
 		public event EventHandler<P2PCommEventArgs> PeerQuit;
 		public event EventHandler<P2PCommEventArgs> PeerJoined;
 		public event EventHandler<P2PCommEventArgs> PeerListReceived;
 
+		public event EventHandler<P2PCommEventArgs> BombSendFailed;
+		public event EventHandler<P2PCommEventArgs> LoseSendFailed;
+
 		private readonly P2PComm p2p;
-		private GameInfo currentGame;
 		private List<PeerInfo> peers;
 		private bool isHost;
 
 		private object peersLock = new object ();
 
-		public P2Pplayer (P2PComm p2p, bool isHost, GameInfo currentGame) {
+		public P2Pplayer (P2PComm p2p, bool isHost) {
 			this.p2p = p2p;
 			this.p2p.DataReceived += P2p_DataReceived;
 			this.peers = new List<PeerInfo> ();
 			this.isHost = isHost;
-			this.currentGame = currentGame;
 		}
 
 		public List<PeerInfo> Peers {
@@ -52,12 +56,6 @@ namespace BombPeliLib
 			}
 		}
 
-		public GameInfo Game {
-			get {
-				return currentGame;
-			}
-		}
-
 		private void P2p_DataReceived (object sender, P2PCommEventArgs e) {
 			switch (e.MessageChannel) {
 				case Channel.GAME:			ProcessGameDataMsg (e);			break;
@@ -65,58 +63,91 @@ namespace BombPeliLib
 			}
 		}
 
-		private void ProcessGameDataMsg (P2PCommEventArgs e) {
-			GameStatus status = (GameStatus)e.Data.status;
-			bool bomb = (bool)e.Data.bomb;
-
-			if (bomb) {
-				OnBombReceived (e);
-			} else {
-				switch (status) {
-					case GameStatus.RUNNING:	OnGameStartReceived (e);	break;
-					case GameStatus.ENDED:		OnGameEndReceived (e);		break;
-				}
+		private void P2p_CancelReceived (object sender, P2PCommEventArgs e) {
+			switch (e.MessageChannel) {
+				case Channel.GAME:			ProcessCanceledGameMsg (e);			break;
+				case Channel.MANAGEMENT:	ProcessCanceledManagementMsg (e);	break;
 			}
+		}
+
+		private void ProcessGameDataMsg (P2PCommEventArgs e) {
+			JObject data;
+			try {
+				data = e.Data;
+			} catch {
+				return;
+			}
+			switch (getDataMsg (data)) {
+				case "pass_bomb":	OnBombReceived (e, data);	break;
+				case "lose":		OnPeerLostReceived (e);		break;
+			}
+		}
+
+		private void ProcessCanceledGameMsg (P2PCommEventArgs e) {
+			JObject data;
+			try {
+				data = e.Data;
+			} catch {
+				return;
+			}
+			switch (getDataMsg (data)) {
+				case "pass_bomb":	OnBombSendFailed (e);	break;
+				case "lose":		OnLoseFailed (e);		break;
+			}
+		}
+
+		private void ProcessCanceledManagementMsg (P2PCommEventArgs e) {
 		}
 
 		private void ProcessManagementDataMsg (P2PCommEventArgs e) {
 			JObject data;
-			string msg;
 			try {
 				data = e.Data;
-				msg = data.GetValue ("msg").Value<string> ().ToLower ();
 			} catch {
 				return;
 			}
-			switch (msg) {
+			switch (getDataMsg (data)) {
 				case "join":		OnJoinReceived (e);				break;
 				case "quit":		OnQuitReceived (e);				break;
 				case "list_peers":	OnListPeers (e);				break;
 				case "peers":		OnPeerListReceived (e, data);	break;
 				case "peer_joined":	OnPeerJoinedReceived (e, data);	break;
 				case "peer_quit":	OnPeerQuitReceived (e, data);	break;
+				case "start":		OnGameStartReceived (e, data);	break;
 			}
 		}
 
-		public void SendBomb (string address, int port) {
-			p2p.Send (Channel.GAME, new {
-				bomb = true,
-				status = GameStatus.RUNNING
-			}, address, port);
+		private string getDataMsg (JObject data) {
+			string msg = "";
+			try {
+				msg = data.GetValue ("msg").Value<string> ().ToLower ();
+			} catch {
+			}
+			return msg;
 		}
 
-		public void SendStartGame (string address, int port) {
+		public void SendBomb (string address, int port, int bombTime) {
 			p2p.Send (Channel.GAME, new {
-				bomb = false,
+				msg = "pass_bomb",
+				bombtime = bombTime,
 				status = GameStatus.RUNNING
 			}, address, port);
 		}
 
 		// Send when game is won and ends
-		public void SendEndGame (string address, int port) {
-			p2p.Send (Channel.GAME, new {
-				bomb = false,
-				status = GameStatus.ENDED
+		public void BroadcastLose () {
+			foreach (PeerInfo peer in Peers) {
+				p2p.Send (Channel.GAME, new {
+					msg = "lost",
+					status = GameStatus.ENDED
+				}, peer.Address, peer.Port);
+			}
+		}
+
+		public void SendStartGame (string address, int port, int bombTime) {
+			p2p.Send (Channel.MANAGEMENT, new {
+				msg = "start",
+				bombtime = bombTime
 			}, address, port);
 		}
 
@@ -172,12 +203,14 @@ namespace BombPeliLib
 			p2p.Close ();
 		}
 
-		private void OnGameStartReceived (P2PCommEventArgs e) {
-			GameStartReceived?.Invoke (this, e);
+		private void OnBombReceived (P2PCommEventArgs e, JObject data) {
+			int bombTime = data.GetValue("bombtime").Value<int>();
+			BombReceived?.Invoke (this, new BombReceivedEventArgs (bombTime));
 		}
 
-		private void OnBombReceived (P2PCommEventArgs e) {
-			BombReceived?.Invoke (this, e);
+		private void OnGameStartReceived (P2PCommEventArgs e, JObject data) {
+			int bombTime = data.GetValue("bombtime").Value<int>();
+			GameStartReceived?.Invoke (this, new GameStartEventArgs (bombTime));
 		}
 
 		private void OnJoinReceived (P2PCommEventArgs e) {
@@ -190,8 +223,9 @@ namespace BombPeliLib
 			PeerQuit?.Invoke (this, e);
 		}
 
-		private void OnGameEndReceived (P2PCommEventArgs e) {
-			GameEndReceived?.Invoke (this, e);
+		private void OnPeerLostReceived (P2PCommEventArgs e) {
+			RemovePeer (e.RemoteAddress, e.RemotePort);
+			PeerLostReceived?.Invoke (this, e);
 		}
 
 		private void OnPeerListReceived (P2PCommEventArgs e, JObject data) {
@@ -217,6 +251,14 @@ namespace BombPeliLib
 			PeerQuit?.Invoke (this, e);
 		}
 
+		public void OnBombSendFailed (P2PCommEventArgs e) {
+			BombSendFailed?.Invoke (this, e);
+		}
+
+		public void OnLoseFailed (P2PCommEventArgs e) {
+			LoseSendFailed?.Invoke (this, e);
+		}
+
 		private void AddPeer (string address, int port) {
 			AddPeer (new PeerInfo(address, port));
 		}
@@ -228,14 +270,17 @@ namespace BombPeliLib
 		}
 
 		private void RemovePeer (string address, int port) {
+			RemovePeer (new PeerInfo (address, port));
+		}
+
+		public void RemovePeer (PeerInfo peer) {
 			PeerInfoComparer compare = PeerInfoComparer.instance;
-			PeerInfo tmp = new PeerInfo(address, port);
 			for (
 				int i = 0, count = Peers.Count;
 				i < count;
 				++i
 			) {
-				if (compare.Equals (Peers[i], tmp)) {
+				if (compare.Equals (Peers[i], peer)) {
 					Peers.RemoveAt (i);
 					break;
 				}
@@ -258,5 +303,24 @@ namespace BombPeliLib
 			}, e.RemoteAddress, e.RemotePort);
 		}
 
+		public PeerInfo? GetRandomPeer () {
+			List<PeerInfo> peers = Peers;
+			if (peers.Count == 0) {
+				return null;
+			}
+			Random r = new Random();
+			int i = 0;
+			const int MAX_RETRIES = 3;
+			PeerInfo? bombTarget = null;
+			do {
+				int index = r.Next (0, peers.Count);
+				try {
+					bombTarget = peers[index];
+				} catch {
+				}
+				++i;
+			} while (bombTarget == null && i < MAX_RETRIES);
+			return bombTarget;
+		}
 	}
 }

@@ -13,6 +13,7 @@ namespace BombPeli
 
 		public void Init (State state);
 		public void Clear ();
+		public State GetState ();
 
 	}
 }

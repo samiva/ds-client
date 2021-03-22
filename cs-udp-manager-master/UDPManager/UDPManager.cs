@@ -565,7 +565,7 @@ namespace kevincastejon
 
 		private void _ClassicSend (object udpData, string remoteAddress, int remotePort) {
 			byte[] sendbuf = Encoding.ASCII.GetBytes(JsonConvert.SerializeObject(udpData));
-			_UDPSocketIPv4.Send (sendbuf, sendbuf.Length, new IPEndPoint (IPAddress.Parse (remoteAddress), remotePort));
+			_UDPSocketIPv4?.Send (sendbuf, sendbuf.Length, new IPEndPoint (IPAddress.Parse (remoteAddress), remotePort));
 		}
 
 		private int _GetNextUniqueID () {

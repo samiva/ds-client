@@ -55,6 +55,10 @@ namespace BombPeli
             
         }
 
+        public State GetState () {
+            return gameList;
+        }
+
         private void MakeViews () {
             /*
                 MEMO: Likely awful performance for more than a few items long collections.
@@ -96,7 +100,7 @@ namespace BombPeli
                 return;
             }
             if (gameList.Games.Count > index) {
-                JoinGame?.Invoke (this, new JoinGameEventArgs (gameList, gameList.Games [index], ErrorMsgDisplay));
+                JoinGame?.Invoke (this, new JoinGameEventArgs (gameList.Games [index], ErrorMsgDisplay));
             }
 		}
 

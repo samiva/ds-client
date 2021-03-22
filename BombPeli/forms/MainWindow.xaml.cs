@@ -69,26 +69,60 @@ namespace BombPeli
 		private void InitLobby (P2Pplayer client, GameLobbyState state) {
 			if (lobbyView == null) {
 				lobbyView = new GameLobby ();
+				lobbyView.StartGame += StartGameHandler;
+				lobbyView.LeaveLobby += LeaveGameLobbyHandler;
 			}
-			state.StartGame += StartGameHandler;
-			state.LeaveLobby += LeaveGameLobbyHandler;
+			client.GameStartReceived += StartGameHandler;
 			client.PeerListReceived += lobbyView.PeerListChangedHandler;
 			client.PeerJoined += lobbyView.PeerListChangedHandler;
 			client.PeerQuit += lobbyView.PeerListChangedHandler;
+			client.PeerQuit += LobbyPeerLeftHandler;
+			
+			if (client.IsHost) {
+				client.PeerJoined += state.PeerJoinedHandler;
+			} else {
+				client.GameStartReceived += state.StartGameHandler;
+			}
 		}
 
-		private void InitGame (P2Pplayer client) {
+		private void ReleaseLobby (P2Pplayer client) {
+			GameLobbyState state = lobbyView.GetState () as GameLobbyState;
+			client.GameStartReceived -= StartGameHandler;
+			client.PeerListReceived -= lobbyView.PeerListChangedHandler;
+			client.PeerJoined -= lobbyView.PeerListChangedHandler;
+			client.PeerQuit -= lobbyView.PeerListChangedHandler;
+			client.PeerQuit -= LobbyPeerLeftHandler;
+
+			if (client.IsHost) {
+				client.PeerJoined -= state.PeerJoinedHandler;
+			} else {
+				client.GameStartReceived -= state.StartGameHandler;
+			}
+		}
+
+		private void InitGame (P2Pplayer client, GameState state) {
 			if (gameView == null) {
 				gameView = new Game ();
 				gameView.LeaveGame += LeaveGameHandler;
 				gameView.PassBomb += PassBombHandler;
 			}
-			client.BombReceived += gameView.BombReceivedHandler;
+			client.PeerQuit += state.PeerLeftHandler;
+			client.PeerLostReceived += PeerLostGameHandler;
+			client.BombReceived += BombReceivedHandler;
+			client.BombSendFailed += BombSendFailedHandler;
 		}
 
-		private bool InitP2PClient (GameInfo currentGame, bool isHost) {
+		private void ReleaseGame (P2Pplayer client) {
+			GameState state = gameView.GetState () as GameState;
+			client.PeerQuit -= state.PeerLeftHandler;
+			client.PeerLostReceived -= PeerLostGameHandler;
+			client.BombReceived -= BombReceivedHandler;
+			client.BombSendFailed -= BombSendFailedHandler;
+		}
+
+		private bool InitP2PClient (bool isHost) {
 			try {
-				P2PClient.Create (config, isHost, currentGame);
+				P2PClient.Create (config, isHost);
 			} catch (Exception e) {
 				MessageBox.Show (string.Format ("Could not initiate P2P node.\n{0}\n\n{1}", e.Message, e.StackTrace.ToString ()));
 				return false;
@@ -116,14 +150,15 @@ namespace BombPeli
 		public void JoinGameHandler (object sender, JoinGameEventArgs e) {
 			Label errorMsg = e.errorMsg;
 
-			if (!InitP2PClient (e.game, false)) {
+			if (!InitP2PClient (false)) {
 				return;
 			}
 			P2Pplayer client = P2PClient.Instance ().client;
 			GameLobbyState state = new GameLobbyState(e.game, Config, client);
 			InitLobby (client, state);
+			GameListState gameList = gameListView.GetState () as GameListState;
 			try {
-				e.gameList.JoinGame (e.game, client);
+				gameList.JoinGame (e.game, client);
 			} catch (Exception ex) {
 				errorMsg.Content = string.Format ("Could not join game.\n{0}\n\n{1}", ex.Message, ex.StackTrace.ToString ());
 				return;
@@ -131,51 +166,151 @@ namespace BombPeli
 			DisplayPage (lobbyView, state);
 		}
 
-		public void StartGameHandler (object sender, StartGameEventArgs e) {
+		public void LobbyPeerLeftHandler (object sender, P2PCommEventArgs e) {
+			GameLobbyState lobby = lobbyView.GetState () as GameLobbyState;
+			lobby.PeerLeftHandler (sender, e);
+			if (lobby.IsHostPeer (e.RemoteAddress, e.RemotePort)) {
+				// Host left, leave lobby.
+				LeaveGameLobbyHandler (sender, e);
+			}
+		}
+
+		public void StartGameHandler (object sender, GameStartEventArgs e) {
 			Application.Current.Dispatcher.BeginInvoke((Action)(() => { StartGameRoutine (); }));
 			
 			void StartGameRoutine () {
+				GameLobbyState lobby = lobbyView.GetState () as GameLobbyState;
+				P2Pplayer client = P2PClient.Instance ().client;
+				GameState game = new GameState (config, client, lobby.Game, e.bombTime);
+				ReleaseLobby (client);
+				InitGame (client, game);
 				try {
-					e.lobby.DoStartGame ();
+					game.StartGame ();
 				} catch (Exception ex) {
 					MessageBox.Show (string.Format ("Failed to start game.\n{0}\n\n{1}", ex.Message, ex.StackTrace.ToString ()));
 					return;
 				}
-				P2Pplayer client = P2PClient.Instance ().client;
-				InitGame (client);
-				DisplayPage (gameView, new GameState (config, client));
+				DisplayPage (gameView, game);
 			}
 		}
 
-		public void LeaveGameLobbyHandler (object sender, LeaveGameLobbyEventArgs e) {
-			try {
-				e.lobby.DoLeaveLobby ();
-			} catch (Exception ex) {
-				MessageBox.Show (string.Format ("Failed to leave game lobby.\n{0}\n\n{1}", ex.Message, ex.StackTrace.ToString ()));
-				return;
-			}
-			lobbyView.Clear ();
-			ReleaseP2PClient ();
-			DisplayPage (gameListView, null);
-		}
+		public void LeaveGameLobbyHandler (object sender, EventArgs e) {
+			Application.Current.Dispatcher.BeginInvoke ((Action)(() => { LeaveGameLobbyRoutine (); }));
 
-		public void PassBombHandler (object sender, PassBombEventArgs e) {
-			try {
-				e.game.PassBomb ();
-			} catch (Exception ex) {
-				MessageBox.Show (string.Format ("Could not pass bomb onwards.\n{0}\n\n{1}", ex.Message, ex.StackTrace.ToString ()));
-				e.game.FailPassBomb ();
-				return;
+			void LeaveGameLobbyRoutine () {
+				GameLobbyState lobby = lobbyView.GetState () as GameLobbyState;
+				try {
+					lobby.LeaveLobby ();
+				} catch (Exception ex) {
+					MessageBox.Show (string.Format ("Failed to leave game lobby.\n{0}\n\n{1}", ex.Message, ex.StackTrace.ToString ()));
+					return;
+				}
+
+				ReleaseLobby (P2PClient.Instance ().client);
+				ReleaseP2PClient ();
+				DisplayPage (gameListView, null);
 			}
 		}
 
-		public void LeaveGameHandler (object sender, LeaveGameEventArgs e) {
+		public void LeaveGameHandler (object sender, EventArgs e) {
+			Application.Current.Dispatcher.BeginInvoke ((Action)(() => { LeaveGameRoutine (); }));
+		}
+
+		public void PeerLostGameHandler (object sender, EventArgs e) {
+			Application.Current.Dispatcher.BeginInvoke ((Action)(() => { PeerLostGameRoutine (); }));
+
+			void PeerLostGameRoutine () {
+				GameState state = gameView.GetState () as GameState;
+				if (state == null) {
+					return;
+				}
+				if (state.IsWinner ()) {
+					WinGameRoutine ();
+					return;
+				} else {
+					state.ResetBombTimes ();
+				}
+			}
+		}
+
+		public void BombReceivedHandler (object sender, BombReceivedEventArgs e) {
+			Application.Current.Dispatcher.BeginInvoke ((Action)(() => { BombReceiveRoutine (); }));
+
+			void BombReceiveRoutine () {
+				GameState state = gameView.GetState () as GameState;
+				bool success = state.ReceiveBomb (e.bombtime);
+				if (!success) {
+					MessageBox.Show ("Outdated bomb received.");
+				}
+				gameView.DoReceiveBomb ();
+			}
+		}
+
+		public void PassBombHandler (object sender, EventArgs e) {
+			Application.Current.Dispatcher.BeginInvoke ((Action)(() => { PassBombRoutine (); }));
+
+			void PassBombRoutine () {
+				GameState gameState = gameView.GetState () as GameState;
+
+				PeerInfo? peer = gameState.Client.GetRandomPeer ();
+				if (gameState.IsWinner () || !peer.HasValue) {
+					WinGameRoutine ();
+					return;
+				}				
+				if (!gameState.HasBomb) {
+					return;
+				}
+				int bombTime = gameState.getRemainingBombTime ();
+				if (bombTime <= 0) {
+					gameState.Lose ();
+					LeaveGameRoutine ();
+					MessageBox.Show ("You lost");
+					return;
+				}
+				gameView.DoPassBomb ();
+				try {
+					gameState.PassBomb (peer.Value, bombTime);
+				} catch (Exception ex) {
+					MessageBox.Show (string.Format ("Could not pass bomb onwards.\n{0}\n\n{1}", ex.Message, ex.StackTrace.ToString ()));
+					gameState.FailPassBomb ();
+					gameView.DoFailBombSend ();
+					return;
+				}
+			}
+		}
+
+		public void BombSendFailedHandler (object sender, EventArgs e) {
+			Application.Current.Dispatcher.BeginInvoke ((Action)(() => { BombSendFailRoutine (); }));
+
+			void BombSendFailRoutine () {
+				GameState gameState = gameView.GetState () as GameState;
+				gameState.FailPassBomb ();
+				gameView.DoFailBombSend ();
+			}
+		}
+
+		public void WinGameHandler (object sender, EventArgs e) {
+			Application.Current.Dispatcher.BeginInvoke ((Action)(() => { WinGameRoutine (); }));
+		}
+
+		private void WinGameRoutine () {
+			MessageBox.Show ("Victory achieved.");
+			LeaveGameRoutine ();
+		}
+
+		private void LeaveGameRoutine () {
+			GameState game = gameView.GetState () as GameState;
 			try {
-				e.game.LeaveGame ();
+				PeerInfo? peer = game.Client.GetRandomPeer();
+				if (peer.HasValue) {
+					game.PassBomb (peer.Value, game.getRemainingBombTime ());
+				}
+				game.LeaveGame ();
 			} catch (Exception ex) {
 				MessageBox.Show (string.Format ("Could not leave game.\n{0}\n\n{1}", ex.Message, ex.StackTrace.ToString ()));
 				return;
 			}
+			ReleaseGame (P2PClient.Instance ().client);
 			ReleaseP2PClient ();
 			DisplayPage (gameListView, null);
 		}
@@ -186,7 +321,7 @@ namespace BombPeli
 		}
 
 		public void PublishGameHandler (object sender, PublishGameEventArgs e) {
-			if (!InitP2PClient (e.game, true)) {
+			if (!InitP2PClient (true)) {
 				return;
 			}
 			GameInfo game;

@@ -43,6 +43,10 @@ namespace BombPeli
 		public void Clear () {
 		}
 
+		public State GetState () {
+			return null;
+		}
+
 		private void PublishButton_Click (object sender, RoutedEventArgs e) {
 			StringBuilder text = new StringBuilder (GameName.Text);
 			string gameName = text.ToString();

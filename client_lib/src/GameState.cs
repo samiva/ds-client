@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Net.Sockets;
 
 namespace BombPeliLib
 {
@@ -7,47 +8,100 @@ namespace BombPeliLib
 	{
 		private Config config;
 		private P2Pplayer client;
+		private GameInfo game;
 		private bool hasBomb = false;
-		private long bombTime;
+		private int originalBombTime;
+		private int bombTime;
+		private long startTime;
 
-		public GameState (Config config, P2Pplayer p2p) {
+		public GameState (Config config, P2Pplayer p2p, GameInfo game, int bombTime) {
 			this.config = config;
 			this.client = p2p;
-			this.bombTime = config.GetLong ("bomb_lifetime");
-			client.BombReceived += ReceiveBombHandler;
+			this.game = game;
+			this.bombTime = bombTime;
+			this.originalBombTime = bombTime;
+			this.startTime = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds ();
+			if (this.client.IsHost) {
+				this.hasBomb = true;
+			}
 		}
 
 		~GameState () {
 			Destroy ();
 		}
 
-		public void ReceiveBombHandler (object sender, EventArgs e) {
-			hasBomb = true;
+		public P2Pplayer Client {
+			get {
+				return client;
+			}
 		}
 
-		public void PassBomb () {
+		public bool HasBomb {
+			get {
+				return hasBomb;
+			}
+		}
+
+		public int OriginalBombTime {
+			get {
+				return originalBombTime;
+			}
+		}
+
+		public void StartGame () {
+			if (client.IsHost) {
+				foreach (PeerInfo p in client.Peers) {
+					client.SendStartGame (p.Address, p.Port, bombTime);
+				}
+			}
+		}
+
+		public void ResetBombTimes () {
+			startTime = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds ();
+		}
+
+		public bool ReceiveBomb (int bombTime) {
+			hasBomb = true;
+			return true;
+		}
+
+		public void SendBombFailedHandler (object sender, EventArgs e) {
+			FailPassBomb ();
+		}
+
+		public void PeerLeftHandler (object sender, P2PCommEventArgs e) {
+			if (client.IsHost) {
+				client.BroadcastPeerQuit (e.RemoteAddress, e.RemotePort);
+			}
+		}
+
+		public bool IsWinner () {
+			return client.Peers.Count == 0;
+		}
+
+		public void Lose () {
+			client.BroadcastLose ();
+		}
+
+		public void PassBomb (PeerInfo peer, int bombtime) {
 			if (!hasBomb) {
 				return;
 			}
-			int i = 0;
-			const int MAX_RETRIES = 3;
-			PeerInfo? bombTarget;
-			do {
-				bombTarget = GetRandomPeer ();
-				++i;
-			} while (bombTarget == null && i < MAX_RETRIES);
-			if (bombTarget == null) {
-				return;
+			try {
+				client.SendBomb (peer.Address, peer.Port, bombtime);
+				hasBomb = false;
+			} catch (SocketException ex) {
+				// Likely dropped connection. Remove from target list.
+				client.RemovePeer (peer);
+				throw;
 			}
-			client.SendBomb (bombTarget.Value.Address, bombTarget.Value.Port);
-			hasBomb = false;
 		}
 
 		public void LeaveGame () {
-			if (client.IsHost) {
-				client.BroadcastPeerQuit (client.Game.Ip, client.Game.Port);
+			if (client?.IsHost == true) {
+				client?.BroadcastPeerQuit (game.Ip, game.Port);
 			} else {
-				client.SendQuitGame (client.Game.Ip, client.Game.Port);
+				client?.SendQuitGame (game.Ip, game.Port);
 			}
 			Destroy ();
 		}
@@ -57,21 +111,17 @@ namespace BombPeliLib
 		}
 
 		private void Destroy () {
-			if (client == null) {
+			P2Pplayer c = client;
+			if (c == null) {
 				return;
 			}
+			c.Close ();
 			client = null;
 		}
 
-		private PeerInfo? GetRandomPeer () {
-			List<PeerInfo> peers = client.Peers;
-			Random r = new Random();
-			int index = r.Next (0, peers.Count - 1);
-			try {
-				return peers [index];
-			} catch {
-			}
-			return null;
+		public int getRemainingBombTime () {
+			long now = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds ();
+			return bombTime - (int)(now - startTime);
 		}
 	}
 }
