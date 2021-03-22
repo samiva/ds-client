@@ -22,11 +22,11 @@ namespace BombPeli
 	/// </summary>
 	public partial class Game : Page, IChangePage
 	{
-
+					
 		public delegate void PassBombEventHandler (object sender, PassBombEventArgs e);
 		public delegate void LeaveGameEventHandler (object sender, LeaveGameEventArgs e);
-		public event PassBombEventHandler OnPassBomb;
-		public event LeaveGameEventHandler OnLeaveGame;
+		public event PassBombEventHandler PassBomb;
+		public event LeaveGameEventHandler LeaveGame;
 
 		private GameState gameState;
 
@@ -43,11 +43,20 @@ namespace BombPeli
 		}
 
 		private void passbomb_Click (object sender, RoutedEventArgs e) {
-			OnPassBomb?.Invoke (this, new PassBombEventArgs (gameState));
+			BombImage.Visibility = Visibility.Hidden;
+			PassBomb?.Invoke (this, new PassBombEventArgs (gameState));
 		}
 
 		private void quit_Click (object sender, RoutedEventArgs e) {
-			OnLeaveGame?.Invoke (this, new LeaveGameEventArgs (gameState));
+			LeaveGame?.Invoke (this, new LeaveGameEventArgs (gameState));
+		}
+
+		public void BombReceivedHandler (object sender, EventArgs e) {
+			Application.Current.Dispatcher.BeginInvoke ((Action)(() => { DoBombReceivedHandler (); }));
+		}
+
+		public void DoBombReceivedHandler () {
+			BombImage.Visibility = Visibility.Visible;
 		}
 	}
 }

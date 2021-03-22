@@ -12,11 +12,15 @@ namespace BombPeliLib
             Address = address;
             Port = port;
         }
-
     }
 
 	public class PeerInfoComparer : IEqualityComparer<PeerInfo>
 	{
+        static public PeerInfoComparer instance = new PeerInfoComparer();
+
+        private PeerInfoComparer () {
+        }
+
 		public bool Equals (PeerInfo a, PeerInfo b) {
             return
                 a.Address == b.Address

@@ -25,8 +25,8 @@ namespace BombPeli
 
 		public delegate void PublishGameEventHandler (object sender, PublishGameEventArgs e);
 		public delegate void CancelCreateGameEventHandler (object sender, EventArgs e);
-		public event PublishGameEventHandler OnPublishGame;
-		public event CancelCreateGameEventHandler OnCancelCreateGame;
+		public event PublishGameEventHandler GamePublished;
+		public event CancelCreateGameEventHandler GameCreateCanceled;
 
 		private Config config;
 		private ConfigGameState configState;
@@ -55,11 +55,11 @@ namespace BombPeli
 				return;
 			}
 			GameInfo game = ServiceDiscoveryClient.CreateNewGameInstance(gameName, config.GetUshort("localport"));
-			OnPublishGame?.Invoke (this, new PublishGameEventArgs (configState, game, ErrorMsgDisplay));
+			GamePublished?.Invoke (this, new PublishGameEventArgs (configState, game, ErrorMsgDisplay));
 		}
 
 		private void CancelButton_Click (object sender, RoutedEventArgs e) {
-			OnCancelCreateGame?.Invoke (this, new EventArgs ());
+			GameCreateCanceled?.Invoke (this, new EventArgs ());
 		}
 	}
 }

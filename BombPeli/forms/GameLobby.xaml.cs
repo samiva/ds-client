@@ -23,11 +23,6 @@ namespace BombPeli
 	public partial class GameLobby : Page, IChangePage
 	{
 
-		public delegate void StartGameEventHandler (object sender, StartGameEventArgs e);
-		public delegate void LeaveGameEventHandler (object sender, LeaveGameLobbyEventArgs e);
-		public event StartGameEventHandler OnStartGame;
-		public event LeaveGameEventHandler OnLeaveGame;
-
 		private GameLobbyState lobby;
 
 		public GameLobby () {
@@ -59,6 +54,8 @@ namespace BombPeli
 			button.Name = "start";
 			button.Click += start_Click;
 			button.Content = "Start game";
+			button.Margin = new Thickness(10);
+			button.Height = 30;
 			return button;
 		}
 
@@ -67,16 +64,27 @@ namespace BombPeli
 			button.Name = "quit";
 			button.Click += quit_Click;
 			button.Content = "Leave game";
+			button.Margin = new Thickness (10);
+			button.Height = 30;
 			return button;
 		}
 
 		private void start_Click (object sender, RoutedEventArgs e) {
-			OnStartGame?.Invoke (this, new StartGameEventArgs (lobby));
+			lobby.InvokeStartGame ();
 		}
 
 		private void quit_Click (object sender, RoutedEventArgs e) {
-			OnLeaveGame?.Invoke (this, new LeaveGameLobbyEventArgs (lobby));
+			lobby.InvokeLeaveLobby ();
 		}
+
+		public void PeerListChangedHandler (object sender, EventArgs e) {
+			Application.Current.Dispatcher.BeginInvoke ((Action)(() => { DoPeerListHandler (); }));
+		}
+
+		public void DoPeerListHandler () {
+			ListBoxPeers.Items.Refresh ();
+		}
+
 
 	}
 }

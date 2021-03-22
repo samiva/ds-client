@@ -24,7 +24,7 @@ namespace BombPeli
 	{
 
 		public delegate void InitCompleteHandler (object sender, EventArgs e);
-		public event InitCompleteHandler OnInitComplete;
+		public event InitCompleteHandler InitComplete;
 
 		public Bootstrap () {
 			InitializeComponent ();
@@ -45,8 +45,13 @@ namespace BombPeli
 		}
 
 		private void Page_Loaded (object sender, RoutedEventArgs e) {
+			string [] args = Environment.GetCommandLineArgs ();
+			string configFile = "config.ini";
+			if (args.Length > 1) {
+				configFile = args[1];
+			}
 			try {
-				Config = new Config ("config.ini");
+				Config = new Config (configFile);
 			} catch (Exception ex) {
 				MessageBox.Show (string.Format ("Failed to load configuration file.\n{0}\n\n{1}", ex.Message, ex.StackTrace.ToString ()));
 				Application.Current.Shutdown (-1);
@@ -62,12 +67,9 @@ namespace BombPeli
 				return;
 			}
 
-			Complete ();
+			InitComplete?.Invoke (this, new EventArgs ());
 		}
 
-		private void Complete () {
-			OnInitComplete?.Invoke (this, new EventArgs ());
-		}
 	}
 
 }

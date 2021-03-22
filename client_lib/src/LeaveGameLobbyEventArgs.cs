@@ -4,15 +4,13 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-using BombPeliLib;
-
-namespace BombPeli
+namespace BombPeliLib
 {
-	public class StartGameEventArgs : EventArgs
+	public class LeaveGameLobbyEventArgs : EventArgs
 	{
 		public readonly GameLobbyState lobby;
 
-		public StartGameEventArgs (GameLobbyState lobby) {
+		public LeaveGameLobbyEventArgs (GameLobbyState lobby) {
 			this.lobby = lobby;
 		}
 

@@ -7,7 +7,15 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="forms\bomb.png" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\client_lib\client_lib.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="forms\bomb.png" />
   </ItemGroup>
 
 </Project>

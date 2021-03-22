@@ -52,7 +52,7 @@ namespace BombPeliLib
 		}
 
 		public void Close () {
-			udpm.Reset ();
+			udpm?.Close ();
 			udpm = null;
 		}
 

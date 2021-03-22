@@ -36,7 +36,7 @@ namespace BombPeli
 			InitializeComponent ();
 
 			initView = new Bootstrap ();
-			initView.OnInitComplete += InitCompleteHandler;
+			initView.InitComplete += InitCompleteHandler;
 			DisplayPage (initView, null);
 		}
 
@@ -60,36 +60,35 @@ namespace BombPeli
 
 			GameListState gameListState = new GameListState (games, config);
 			gameListView = new GameList (gameListState, config);
-			gameListView.OnCreateGame += CreateNewGameHandler;
-			gameListView.OnJoinGame += JoinGameHandler;
-			gameListView.OnQuit += QuitHandler;
+			gameListView.CreateGame += CreateNewGameHandler;
+			gameListView.JoinGame += JoinGameHandler;
+			gameListView.Quit += QuitHandler;
 			DisplayPage (gameListView, null);
 		}
 
-		private void InitLobby () {
+		private void InitLobby (P2Pplayer client, GameLobbyState state) {
 			if (lobbyView == null) {
 				lobbyView = new GameLobby ();
-				lobbyView.OnStartGame += StartGameHandler;
-				lobbyView.OnLeaveGame += LeaveGameLobbyHandler;
-				/*
-					- P2P client joined
-					- P2P client left
-				*/
 			}
+			state.StartGame += StartGameHandler;
+			state.LeaveLobby += LeaveGameLobbyHandler;
+			client.PeerListReceived += lobbyView.PeerListChangedHandler;
+			client.PeerJoined += lobbyView.PeerListChangedHandler;
+			client.PeerQuit += lobbyView.PeerListChangedHandler;
 		}
 
-		private void InitGame () {
+		private void InitGame (P2Pplayer client) {
 			if (gameView == null) {
 				gameView = new Game ();
-				gameView.OnLeaveGame += LeaveGameHandler;
-				gameView.OnPassBomb += PassBombHandler;
+				gameView.LeaveGame += LeaveGameHandler;
+				gameView.PassBomb += PassBombHandler;
 			}
-			gameView.Init (new GameState (P2PClient.Instance (config).client));
+			client.BombReceived += gameView.BombReceivedHandler;
 		}
 
-		private bool InitP2PClient () {
+		private bool InitP2PClient (GameInfo currentGame, bool isHost) {
 			try {
-				P2PClient.Instance (config);
+				P2PClient.Create (config, isHost, currentGame);
 			} catch (Exception e) {
 				MessageBox.Show (string.Format ("Could not initiate P2P node.\n{0}\n\n{1}", e.Message, e.StackTrace.ToString ()));
 				return false;
@@ -108,8 +107,8 @@ namespace BombPeli
 			if (configGameView == null) {
 				ConfigGameState configState = new ConfigGameState(config);
 				configGameView = new ConfigureGame (configState, config);
-				configGameView.OnPublishGame += PublishGameHandler;
-				configGameView.OnCancelCreateGame += CancelConfigureGameHandler;
+				configGameView.GamePublished += PublishGameHandler;
+				configGameView.GameCreateCanceled += CancelConfigureGameHandler;
 			}
 			DisplayPage (configGameView, null);
 		}
@@ -117,37 +116,40 @@ namespace BombPeli
 		public void JoinGameHandler (object sender, JoinGameEventArgs e) {
 			Label errorMsg = e.errorMsg;
 
-			if (!InitP2PClient ()) {
+			if (!InitP2PClient (e.game, false)) {
 				return;
 			}
-			List<PeerInfo> peers;
+			P2Pplayer client = P2PClient.Instance ().client;
+			GameLobbyState state = new GameLobbyState(e.game, Config, client);
+			InitLobby (client, state);
 			try {
-				peers = e.gameList.JoinGame (e.game, P2PClient.Instance (config).client);
+				e.gameList.JoinGame (e.game, client);
 			} catch (Exception ex) {
 				errorMsg.Content = string.Format ("Could not join game.\n{0}\n\n{1}", ex.Message, ex.StackTrace.ToString ());
 				return;
 			}
-			if (peers == null) {
-				return;
-			}
-			InitLobby ();
-			DisplayPage (lobbyView, new GameLobbyState (e.game, peers, config, P2PClient.Instance (config).client, false));
+			DisplayPage (lobbyView, state);
 		}
 
 		public void StartGameHandler (object sender, StartGameEventArgs e) {
-			try {
-				e.lobby.StartGame ();
-			} catch (Exception ex) {
-				MessageBox.Show (string.Format ("Failed to start game.\n{0}\n\n{1}", ex.Message, ex.StackTrace.ToString ()));
-				return;
+			Application.Current.Dispatcher.BeginInvoke((Action)(() => { StartGameRoutine (); }));
+			
+			void StartGameRoutine () {
+				try {
+					e.lobby.DoStartGame ();
+				} catch (Exception ex) {
+					MessageBox.Show (string.Format ("Failed to start game.\n{0}\n\n{1}", ex.Message, ex.StackTrace.ToString ()));
+					return;
+				}
+				P2Pplayer client = P2PClient.Instance ().client;
+				InitGame (client);
+				DisplayPage (gameView, new GameState (config, client));
 			}
-
-			InitGame ();
 		}
 
 		public void LeaveGameLobbyHandler (object sender, LeaveGameLobbyEventArgs e) {
 			try {
-				e.lobby.LeaveLobby ();
+				e.lobby.DoLeaveLobby ();
 			} catch (Exception ex) {
 				MessageBox.Show (string.Format ("Failed to leave game lobby.\n{0}\n\n{1}", ex.Message, ex.StackTrace.ToString ()));
 				return;
@@ -174,7 +176,6 @@ namespace BombPeli
 				MessageBox.Show (string.Format ("Could not leave game.\n{0}\n\n{1}", ex.Message, ex.StackTrace.ToString ()));
 				return;
 			}
-			gameView.Clear ();
 			ReleaseP2PClient ();
 			DisplayPage (gameListView, null);
 		}
@@ -185,7 +186,7 @@ namespace BombPeli
 		}
 
 		public void PublishGameHandler (object sender, PublishGameEventArgs e) {
-			if (!InitP2PClient ()) {
+			if (!InitP2PClient (e.game, true)) {
 				return;
 			}
 			GameInfo game;
@@ -195,8 +196,9 @@ namespace BombPeli
 				MessageBox.Show (string.Format ("Could not register game. Try publishing again.\n{0}\n\n{1}", ex.Message, ex.StackTrace.ToString ()));
 				return;
 			}
-			InitLobby ();
-			DisplayPage (lobbyView, new GameLobbyState (game, new List<PeerInfo>(), config, P2PClient.Instance (config).client, true));
+			GameLobbyState state = new GameLobbyState (game, config, P2PClient.Instance ().client);
+			InitLobby (P2PClient.Instance ().client, state);
+			DisplayPage (lobbyView, state);
 		}
 
 		public void CancelConfigureGameHandler (object sender, EventArgs e) {

@@ -26,9 +26,9 @@ namespace BombPeli
 
         public delegate void GameListEventHandler (object sender, EventArgs e);
         public delegate void JoinGameEventHandler (object sender, JoinGameEventArgs e);
-        public event GameListEventHandler OnCreateGame;
-        public event JoinGameEventHandler OnJoinGame;
-        public event GameListEventHandler OnQuit;
+        public event GameListEventHandler CreateGame;
+        public event JoinGameEventHandler JoinGame;
+        public event GameListEventHandler Quit;
 
         private GameListState gameList;
         private Config config;
@@ -61,7 +61,6 @@ namespace BombPeli
                 Reason being the large number of events that will be fired upon execution.
             */
             List<GameInfo> games = gameList.Games;
-            games.Add (new GameInfo (123, "asd", "12341234", 1234, GameStatus.ENDED));
             int gameCount = games.Count;
             int viewCount = gameViews.Count;
 
@@ -87,7 +86,7 @@ namespace BombPeli
         }
 
 		private void newgame_Click (object sender, RoutedEventArgs e) {
-            OnCreateGame?.Invoke (this, e);
+            CreateGame?.Invoke (this, e);
 		}
 
 		private void joingame_Click (object sender, RoutedEventArgs e) {
@@ -97,7 +96,7 @@ namespace BombPeli
                 return;
             }
             if (gameList.Games.Count > index) {
-                OnJoinGame?.Invoke (this, new JoinGameEventArgs (gameList, gameList.Games [index], ErrorMsgDisplay));
+                JoinGame?.Invoke (this, new JoinGameEventArgs (gameList, gameList.Games [index], ErrorMsgDisplay));
             }
 		}
 
@@ -115,7 +114,7 @@ namespace BombPeli
 		}
 
 		private void quit_Click (object sender, RoutedEventArgs e) {
-            OnQuit?.Invoke (this, e);
+            Quit?.Invoke (this, e);
 		}
 
         private void fetchGames () {

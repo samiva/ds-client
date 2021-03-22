@@ -6,36 +6,41 @@ namespace BombPeliLib
 	public class GameLobbyState : State
 	{
 
+		public delegate void StartGameEventHandler (object sender, StartGameEventArgs e);
+		public delegate void LeaveGameLobbyEventHandler (object sender, LeaveGameLobbyEventArgs e);
+		public event StartGameEventHandler StartGame;
+		public event LeaveGameLobbyEventHandler LeaveLobby;
+
 		private Config config;
 		private GameInfo gameInfo;
-		private List<PeerInfo> peerInfos;
 		private P2Pplayer client;
-		private bool isHost;
 
-		public GameLobbyState (GameInfo gi, List<PeerInfo> peers, Config config, P2Pplayer p2p, bool isHost) {
+		public GameLobbyState (GameInfo gi, Config config, P2Pplayer p2p) {
 			this.gameInfo = gi;
-			this.peerInfos = peers;
 			this.config = config;
 			this.client = p2p;
-			this.isHost = isHost;
-
-			this.client.JoinReceived += HandlePeerJoin;
-			this.client.QuitReceived += HandlePeerLeave;
+			if (client.IsHost) {
+				client.PeerJoined += PeerJoinedHandler;
+				client.PeerQuit += PeerLeftHandler;
+			} else {
+				client.GameStartReceived += StartGameHandler;
+				client.PeerQuit += LeaveGameLobbyHandler;
+			}
 		}
 
 		~GameLobbyState () {
-			Destroy ();
+			Destroy (true);
 		}
 
 		public List<PeerInfo> Peers {
 			get {
-				return peerInfos;
+				return client.Peers;
 			}
 		}
 
 		public bool IsHost {
 			get {
-				return isHost;
+				return client.IsHost;
 			}
 		}
 
@@ -45,62 +50,70 @@ namespace BombPeliLib
 			}
 		}
 
-		private void P2p_DataReceived (object sender, P2PCommEventArgs e) {
-			switch (e.MessageChannel) {
-				case Channel.MANAGEMENT:
-					if (isHost && peerInfos.Count <= config.GetInt ("maxpeer")) {
-						PeerInfo peer = new PeerInfo(e.RemoteAddress, e.RemotePort);
-						peerInfos.Add (peer);
-					}
-					break;
-				case Channel.GAME:
-					GameStatus status = e.Data.status;
-					if (status == GameStatus.RUNNING) {
-					} else if (status == GameStatus.ENDED) {
-						LeaveLobby ();
-					}
-					break;
+		public void InvokeStartGame () {
+			StartGame?.Invoke (this, new StartGameEventArgs (this));
+		}
+
+		public void InvokeLeaveLobby () {
+			LeaveLobby?.Invoke (this, new LeaveGameLobbyEventArgs (this));
+		}
+
+		public void DoStartGame () {
+			if (!client.IsHost) {
+				return;
 			}
-		}
-
-		private void HandlePeerJoin (object sender, P2PCommEventArgs e) {
-			
-		}
-
-		private void HandlePeerLeave (object sender, P2PCommEventArgs e) {
-
-		}
-
-		public void StartGame () {
-			if (isHost) {
-				foreach (PeerInfo p in peerInfos) {
-					client.SendStartGame (p.Address, p.Port);
-				}
-				Destroy ();
+			foreach (PeerInfo p in client.Peers) {
+				client.SendStartGame (p.Address, p.Port);
 			}
+			Destroy (false);
 		}
 
-		public void LeaveLobby () {
-			if (isHost) {
+		public void DoLeaveLobby () {
+			if (client?.IsHost == true) {
 				TerminateGame ();
+			} else {
+				client.SendQuitGame (gameInfo.Ip, gameInfo.Port);
 			}
-			Destroy ();
+			Destroy (true);
+		}
+
+		public void PeerJoinedHandler (object sender, P2PCommEventArgs e) {
+			client.BroadcastPeerJoin (e.RemoteAddress, e.RemotePort);
+		}
+
+		public void PeerLeftHandler (object sender, P2PCommEventArgs e) {
+			client.BroadcastPeerQuit (e.RemoteAddress, e.RemotePort);
+		}
+
+		public void StartGameHandler (object sender, P2PCommEventArgs e) {
+			InvokeStartGame ();
+		}
+
+		public void LeaveGameLobbyHandler (object sender, P2PCommEventArgs e) {
+			InvokeLeaveLobby ();
 		}
 
 		private void TerminateGame () {
-			foreach (PeerInfo p in peerInfos) {
+			foreach (PeerInfo p in client.Peers) {
 				client.SendQuitGame (p.Address, p.Port);
 			}
 			ServiceDiscoveryClient service = new ServiceDiscoveryClient (config);
 			service.DeregisterGame (gameInfo);
 		}
 
-		private void Destroy () {
-			if (client == null) {
+		private void Destroy (bool closeClient) {
+			// Ensure that no references to P2P client are left here.
+			P2Pplayer c = client;
+			if (c == null) {
 				return;
 			}
-			client.JoinReceived -= HandlePeerJoin;
-			client.QuitReceived -= HandlePeerLeave;
+			if (c.IsHost) {
+				c.PeerJoined -= PeerJoinedHandler;
+				c.PeerQuit -= PeerLeftHandler;
+			}
+			if (closeClient) {
+				client.Close ();
+			}
 			client = null;
 		}
 	}
