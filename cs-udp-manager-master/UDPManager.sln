@@ -5,8 +5,6 @@ VisualStudioVersion = 16.0.31019.35
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UDPManager", "UDPManager\UDPManager.csproj", "{9DC27BD5-437E-46FD-8ED8-ABF9B3796EF2}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "foobar", "foobar\foobar.csproj", "{6F40BA5B-ECCB-4AB8-9C89-48F5572A9539}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -17,10 +15,6 @@ Global
 		{9DC27BD5-437E-46FD-8ED8-ABF9B3796EF2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9DC27BD5-437E-46FD-8ED8-ABF9B3796EF2}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9DC27BD5-437E-46FD-8ED8-ABF9B3796EF2}.Release|Any CPU.Build.0 = Release|Any CPU
-		{6F40BA5B-ECCB-4AB8-9C89-48F5572A9539}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{6F40BA5B-ECCB-4AB8-9C89-48F5572A9539}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{6F40BA5B-ECCB-4AB8-9C89-48F5572A9539}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{6F40BA5B-ECCB-4AB8-9C89-48F5572A9539}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
