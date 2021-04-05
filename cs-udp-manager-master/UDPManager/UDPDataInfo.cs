@@ -52,13 +52,29 @@
 		/// <param name="remotePort">The IPV4 port of the sender or the target</param>
 		/// <param name="data">A <see cref="JavaScriptObject"/> that contains the data sent or received</param>
 		/// <param name="ID">A unique ID for this message</param>
-		public UDPDataInfo (string channelName, string remoteAddress, int remotePort, object data, int ID) {
+		public UDPDataInfo(string channelName, string remoteAddress, int remotePort, object data, int ID) {
 			this._channelName = channelName;
 			this._ID = ID;
 			this._data = data;
 			this._remoteAddress = remoteAddress;
 			this._remotePort = remotePort;
 		}
+
+		~UDPDataInfo() {
+			Timer tmp = this._retryTimer;
+			if (tmp != null) {
+				tmp.RemoveEventListener<TimerEvent>(TimerEvent.Names.TIMER, this._RetryTimerHandler);
+				tmp.Stop();
+				this._retryTimer = null;
+			}
+			tmp = this._cancelTimer;
+			if (tmp != null) {
+				tmp.RemoveEventListener<TimerEvent>(TimerEvent.Names.TIMER_COMPLETE, this._CancelTimerHandler);
+				tmp.Stop();
+				this._cancelTimer = null;
+			}
+		}
+
 		/// <summary>
 		/// A string representing the channel name
 		/// </summary>

@@ -243,11 +243,10 @@ namespace kevincastejon
 		/// <param name='removeChannels'>Remove all the added UDPChannels, true by default
 		/// </param>
 		public void Close (bool removeChannels = true) {
-			this._bound = false;
-			if (this._UDPSocketIPv4 != null) {
-
+			UdpClient tmp = this._UDPSocketIPv4;
+			if (tmp != null) {
 				//_UDPSocketIPv4.EndReceive();
-				this._UDPSocketIPv4.Close ();
+				tmp.Close ();
 				this._UDPSocketIPv4 = null;
 			}
 			if (removeChannels) {
@@ -255,6 +254,7 @@ namespace kevincastejon
 					this.RemoveChannel (this._channels[0].Name);
 				}
 			}
+			this._bound = false;
 		}
 		/// <summary>
 		/// Utilitary static method to reset all instances of UDPManager on the program</summary>
@@ -373,7 +373,9 @@ namespace kevincastejon
 
 		private void _ReceiveDataHandler (IAsyncResult ar) {
 			lock (receiveDataLock) {
-
+				if (!this.Bound) {
+					return;
+				}
 				IPEndPoint receivedIpEndPoint = new IPEndPoint(IPAddress.Any, 0);
 				byte[] receiveBytes;
 
