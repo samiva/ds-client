@@ -52,7 +52,17 @@ namespace BombPeliLib
 		}
 
 		public void Close () {
-			udpm?.Close ();
+			UDPManager tmp = udpm;
+			if (tmp == null) {
+				return;
+			}
+			tmp.Off<UDPManagerEvent>(UDPManagerEvent.Names.BOUND, UDPManagerBoundHandler);
+			tmp.Off<UDPManagerEvent>(UDPManagerEvent.Names.DATA_CANCELED, DataCancelledHandler);
+			tmp.Off<UDPManagerEvent>(UDPManagerEvent.Names.DATA_DELIVERED, DataDeliveredHandler);
+			tmp.Off<UDPManagerEvent>(UDPManagerEvent.Names.DATA_RECEIVED, DataReceivedHandler);
+			tmp.Off<UDPManagerEvent>(UDPManagerEvent.Names.DATA_RETRIED, DataRetriedHandler);
+			tmp.Off<UDPManagerEvent>(UDPManagerEvent.Names.DATA_SENT, DataSentHandler);
+			tmp.Close ();
 			udpm = null;
 		}
 
