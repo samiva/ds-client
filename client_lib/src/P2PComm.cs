@@ -4,7 +4,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-using kevincastejon;
+using MonoTorrent; 
+using MonoTorrent.Client;
 
 namespace BombPeliLib
 {
@@ -18,7 +19,7 @@ namespace BombPeliLib
 
 	public class P2PComm {
 
-		private UDPManager udpm;
+		private ClientEngine clientEngine;
 
 		public int Port {
 			get; private set;
@@ -26,18 +27,10 @@ namespace BombPeliLib
 
 		public P2PComm (int port) {
 			Port = port;
-			udpm = new UDPManager (port);
-
-			udpm.On<UDPManagerEvent> (UDPManagerEvent.Names.BOUND, UDPManagerBoundHandler);
-			udpm.On<UDPManagerEvent> (UDPManagerEvent.Names.DATA_CANCELED, DataCancelledHandler);
-			udpm.On<UDPManagerEvent> (UDPManagerEvent.Names.DATA_DELIVERED, DataDeliveredHandler);
-			udpm.On<UDPManagerEvent> (UDPManagerEvent.Names.DATA_RECEIVED, DataReceivedHandler);
-			udpm.On<UDPManagerEvent> (UDPManagerEvent.Names.DATA_RETRIED, DataRetriedHandler);
-			udpm.On<UDPManagerEvent> (UDPManagerEvent.Names.DATA_SENT, DataSentHandler);
-
-			udpm.AddChannel(Enum.GetName<Channel> (Channel.DEFAULT), true, true, 50, 1000);
-			udpm.AddChannel(Enum.GetName<Channel> (Channel.MANAGEMENT), true, true, 50, 1000);
-			udpm.AddChannel(Enum.GetName<Channel> (Channel.GAME), true, true, 50, 1000);
+			var settings = new EngineSettingsBuilder { ListenPort = port };
+			clientEngine = new ClientEngine(settings.ToSettings());
+			
+			
 		}
 
 		public event EventHandler<P2PCommEventArgs> UDPManagerBound;
@@ -48,12 +41,12 @@ namespace BombPeliLib
 		public event EventHandler<P2PCommEventArgs> DataSent;
 
 		public void Send (Channel channel, object data, string address, int port) {
-			udpm.Send (Enum.GetName<Channel>(channel), data, address, port);
+			//udpm.Send (Enum.GetName<Channel>(channel), data, address, port);
+			clientEngine.
 		}
 
 		public void Close () {
-			udpm?.Close ();
-			udpm = null;
+			clientEngine.StopAllAsync();
 		}
 
 		private void UDPManagerBoundHandler (UDPManagerEvent e) {
