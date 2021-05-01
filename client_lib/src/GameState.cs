@@ -79,8 +79,25 @@ namespace BombPeliLib
 			return client.Peers.Count == 0;
 		}
 
+		public void Win() {
+			hasBomb = false;
+			Destroy();
+		}
+
 		public void Lose () {
 			client.BroadcastLose ();
+			System.Threading.Thread.Sleep(500);
+			RespawnBomb();
+			Destroy();
+		}
+
+		public void LeaveGame() {
+			if (client?.IsHost == true) {
+				client?.BroadcastPeerQuit(game.Ip, game.Port);
+			} else {
+				client?.SendQuitGame(game.Ip, game.Port);
+			}
+			Destroy();
 		}
 
 		public void PassBomb (PeerInfo peer, int bombtime) {
@@ -97,17 +114,21 @@ namespace BombPeliLib
 			}
 		}
 
-		public void LeaveGame () {
-			if (client?.IsHost == true) {
-				client?.BroadcastPeerQuit (game.Ip, game.Port);
-			} else {
-				client?.SendQuitGame (game.Ip, game.Port);
-			}
-			Destroy ();
-		}
-
 		public void FailPassBomb () {
 			hasBomb = true;
+		}
+
+		private void RespawnBomb() {
+			PeerInfo? peer = client.GetRandomPeer();
+			if (!peer.HasValue || client.Peers.Count <= 1) {
+				return;
+			}
+			try {
+				client.SendBomb (peer.Value.Address, peer.Value.Port, originalBombTime);
+			} catch {
+				throw;
+			}
+			hasBomb = false;
 		}
 
 		private void Destroy () {

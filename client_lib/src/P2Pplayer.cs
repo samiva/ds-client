@@ -138,7 +138,7 @@ namespace BombPeliLib
 		public void BroadcastLose () {
 			foreach (PeerInfo peer in Peers) {
 				p2p.Send (Channel.GAME, new {
-					msg = "lost",
+					msg = "lose",
 					status = GameStatus.ENDED
 				}, peer.Address, peer.Port);
 			}
