@@ -14,6 +14,12 @@
     <Reference Include="EventManager">
       <HintPath>..\cs-udp-manager-master\UDPManager\bin\Debug\EventManager.dll</HintPath>
     </Reference>
+    <Reference Include="MonoTorrent">
+      <HintPath>..\monotorrent\src\MonoTorrent\bin\Release\netstandard2.0\MonoTorrent.dll</HintPath>
+    </Reference>
+    <Reference Include="NetworkController">
+      <HintPath>..\P2PNetworkBuilder\NetworkController\bin\Release\netstandard2.0\NetworkController.dll</HintPath>
+    </Reference>
     <Reference Include="Newtonsoft.Json">
       <HintPath>..\cs-udp-manager-master\UDPManager\bin\Debug\Newtonsoft.Json.dll</HintPath>
     </Reference>

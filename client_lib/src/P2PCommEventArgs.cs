@@ -1,5 +1,4 @@
-﻿using kevincastejon;
-
+﻿
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -33,20 +32,20 @@ namespace BombPeliLib
             MessageChannel = channel;
         }
 
-        static public explicit operator P2PCommEventArgs (UDPManagerEvent e) {
-            Channel channel;
-            if (!Enum.TryParse<Channel> (e.UDPdataInfo.ChannelName, true, out channel)) {
-                channel = Channel.UNKNOWN;
-            }
+        //static public explicit operator P2PCommEventArgs (UDPManagerEvent e) {
+        //    Channel channel;
+        //    if (!Enum.TryParse<Channel> (e.UDPdataInfo.ChannelName, true, out channel)) {
+        //        channel = Channel.UNKNOWN;
+        //    }
 
-            return new P2PCommEventArgs (
-                e.UDPdataInfo.RemoteAddress,
-                e.UDPdataInfo.RemotePort,
-                e.UDPdataInfo.ID,
-                e.UDPdataInfo.Data,
-                channel
-            );
-        }
+        //    return new P2PCommEventArgs (
+        //        e.UDPdataInfo.RemoteAddress,
+        //        e.UDPdataInfo.RemotePort,
+        //        e.UDPdataInfo.ID,
+        //        e.UDPdataInfo.Data,
+        //        channel
+        //    );
+        //}
 
     }
 }
