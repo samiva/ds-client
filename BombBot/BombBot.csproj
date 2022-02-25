@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <TargetFramework>net5.0-windows</TargetFramework>
+        <Nullable>enable</Nullable>
+        <SatelliteResourceLanguages>none</SatelliteResourceLanguages>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\BombPeli\BombPeli.csproj" />
+      <ProjectReference Include="..\client_lib\client_lib.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Reference Include="SimpleP2P, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
+        <HintPath>..\SimpleP2P\SimpleP2P\SimpleP2P\bin\Debug\net5.0\SimpleP2P.dll</HintPath>
+      </Reference>
+      <Reference Include="System.Windows.Forms, Version=5.0.4.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" ExcludeAssets="All">
+          <HintPath>C:\Program Files\dotnet\shared\Microsoft.WindowsDesktop.App\5.0.4\System.Windows.Forms.dll</HintPath>
+          <SatelliteResourceLanguages>none</SatelliteResourceLanguages>
+      </Reference>
+    </ItemGroup>
+    
+</Project>

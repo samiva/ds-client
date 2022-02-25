@@ -1,8 +1,9 @@
 ﻿using BombPeliLib;
 
 using System;
+using System.Windows.Documents;
 
-namespace BombPeli
+namespace BombBot
 {
 	/// <summary>
 	/// Singleton wrapper for P2PPlayer class to make it easier
@@ -12,8 +13,8 @@ namespace BombPeli
 	public class P2PClient
 	{
 
-		static private P2PClient? instance;
-		public         P2PApi     client;
+		static private  P2PClient? instance;
+		readonly public P2PApi     client;
 
 		private P2PClient (Config config, bool isHost) {
 			ushort port = config.GetUshort ("localport");
@@ -22,7 +23,7 @@ namespace BombPeli
 		}
 
 		~P2PClient () {
-			Destroy ();
+			this.Destroy ();
 		}
 
 		static public void Create (Config config, bool isHost) {
@@ -35,11 +36,16 @@ namespace BombPeli
 		}
 
 		static public void Release () {
-			if (instance == null) {
-				return;
-			}
-			instance.Destroy ();
+			instance?.Destroy ();
 			instance = null;
+		}
+
+		public long getPacketSendCount () {
+			return this.client.getPacketSendCount;
+		}
+		
+		public long getPacketReceiveCount () {
+			return this.client.getPacketReceiveCount;
 		}
 
 		private void Destroy () {

@@ -1,97 +1,95 @@
 using System;
 using System.Collections.Generic;
+using System.Net;
+using BombPeliLib.Events;
 
 namespace BombPeliLib
 {
 	public class GameLobbyState : State
 	{
 
-		private Config config;
-		private GameInfo gameInfo;
-		private P2Pplayer client;
-		private int bombTime;
+		readonly private Config   config;
+		private          GameInfo gameInfo;
+		private          P2PApi?  client;
+		private          int      bombTime;
 
-		public GameLobbyState (GameInfo gi, Config config, P2Pplayer p2p) {
+		public GameLobbyState (GameInfo gi, Config config, P2PApi p2p) {
 			this.gameInfo = gi;
-			this.config = config;
-			this.client = p2p;
+			this.config   = config;
+			this.client   = p2p;
 			this.bombTime = config.GetInt ("bomb_lifetime");
 		}
 
 		~GameLobbyState () {
-			Destroy (true);
+			this.Destroy (true);
 		}
 
 		public List<PeerInfo> Peers {
-			get {
-				return client.Peers;
-			}
+			get { return this.client?.Peers ?? new List<PeerInfo> (); }
 		}
 
 		public bool IsHost {
-			get {
-				return client.IsHost;
-			}
+			get { return this.client?.IsHost ?? false; }
 		}
 
 		public GameInfo Game {
-			get {
-				return gameInfo;
-			}
+			get { return this.gameInfo; }
 		}
 
 		public int BombTime {
-			get {
-				return bombTime;
-			}
+			get { return this.bombTime; }
 		}
 
 		public void LeaveLobby () {
-			if (client?.IsHost == true) {
-				TerminateGame ();
+			if (this.IsHost == true) {
+				this.TerminateGame ();
 			} else {
-				client.SendQuitGame (gameInfo.Ip, gameInfo.Port);
+				this.client?.DoLeaveGame (this.gameInfo.getEndpoint ());
 			}
-			Destroy (true);
+			this.Destroy (true);
 		}
 
-		public void PeerJoinedHandler (object sender, P2PCommEventArgs e) {
-			client.BroadcastPeerJoin (e.RemoteAddress, e.RemotePort);
+		public void PeerJoinedHandler (object sender, PeerJoinedEventArgs e) {
+			this.client?.DoBroadcastPeerJoined (e.peer);
 		}
 
-		public bool IsHostPeer (string address, int port) {
-			return address == gameInfo.Ip && port == gameInfo.Port;
+		public bool IsHostPeer (IPEndPoint ip) {
+			return this.gameInfo.getEndpoint ().Equals (ip);
 		}
 
-		public void PeerLeftHandler (object sender, P2PCommEventArgs e) {
-			if (client.IsHost) {
-				client.BroadcastPeerQuit (e.RemoteAddress, e.RemotePort);
+		public void PeerLeftHandler (object sender, PeerLeftEventArgs e) {
+			if (this.IsHost) {
+				this.client?.BroadcastPeerQuit (e.peer);
 			}
 		}
 
 		public void StartGameHandler (object sender, GameStartEventArgs e) {
-			this.bombTime = e.bombTime;
-			Destroy (false);
+			this.bombTime = e.bombtime;
+			this.Destroy (false);
 		}
 
 		private void TerminateGame () {
-			ServiceDiscoveryClient service = new ServiceDiscoveryClient (config);
-			service.DeregisterGame (gameInfo);
-			foreach (PeerInfo p in client.Peers) {
-				client.SendQuitGame (p.Address, p.Port);
+			ServiceDiscoveryClient service = new ServiceDiscoveryClient (this.config);
+			service.DeregisterGame (this.gameInfo);
+			P2PApi? c = this.client;
+			if (c == null) {
+				return;
+			}
+			foreach (PeerInfo p in c.Peers) {
+				c.DoLeaveGame (p.ip);
 			}
 		}
 
 		private void Destroy (bool closeClient) {
 			// Ensure that no references to P2P client are left here.
-			P2Pplayer c = client;
+			P2PApi? c = this.client;
 			if (c == null) {
 				return;
 			}
 			if (closeClient) {
-				client.Close ();
+				c.Close ();
 			}
-			client = null;
+			this.client = null;
 		}
 
 	}

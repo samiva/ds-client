@@ -25,11 +25,12 @@ namespace BombPeli
 
 		public delegate void PublishGameEventHandler (object sender, PublishGameEventArgs e);
 		public delegate void CancelCreateGameEventHandler (object sender, EventArgs e);
-		public event PublishGameEventHandler GamePublished;
-		public event CancelCreateGameEventHandler GameCreateCanceled;
+		
+		public event PublishGameEventHandler? GamePublished;
+		public event CancelCreateGameEventHandler? GameCreateCanceled;
 
-		private Config config;
-		private ConfigGameState configState;
+		readonly private Config          config;
+		readonly private ConfigGameState configState;
 
 		public ConfigureGame (ConfigGameState configState, Config config) {
 			InitializeComponent ();
@@ -37,13 +38,13 @@ namespace BombPeli
 			this.config = config;
 		}
 
-		public void Init (State state) {
+		public void Init (State? state) {
 		}
 
 		public void Clear () {
 		}
 
-		public State GetState () {
+		public State? GetState () {
 			return null;
 		}
 

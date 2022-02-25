@@ -4,6 +4,7 @@
     <TargetFramework>net5.0</TargetFramework>
     <AssemblyName>client_lib</AssemblyName>
     <RootNamespace>BombPeliLib</RootNamespace>
+    <Nullable>enable</Nullable>
   </PropertyGroup>
 
   <ItemGroup>
@@ -11,17 +12,12 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Reference Include="EventManager">
-      <HintPath>..\cs-udp-manager-master\UDPManager\bin\Debug\EventManager.dll</HintPath>
-    </Reference>
-    <Reference Include="Newtonsoft.Json">
-      <HintPath>..\cs-udp-manager-master\UDPManager\bin\Debug\Newtonsoft.Json.dll</HintPath>
-    </Reference>
-    <Reference Include="TimerEvent">
-      <HintPath>..\cs-udp-manager-master\UDPManager\bin\Debug\TimerEvent.dll</HintPath>
-    </Reference>
-    <Reference Include="UDPManager">
-      <HintPath>..\cs-udp-manager-master\UDPManager\bin\Debug\UDPManager.dll</HintPath>
+    <Compile Remove="src\Game.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="SimpleP2P, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
+      <HintPath>..\SimpleP2P\SimpleP2P\SimpleP2P\bin\Debug\net5.0\SimpleP2P.dll</HintPath>
     </Reference>
   </ItemGroup>
 

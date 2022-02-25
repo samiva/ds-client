@@ -11,9 +11,9 @@ namespace BombPeli
 	public interface IChangePage
 	{
 
-		public void Init (State state);
-		public void Clear ();
-		public State GetState ();
+		public void   Init (State? state);
+		public void   Clear ();
+		public State? GetState ();
 
 	}
 }

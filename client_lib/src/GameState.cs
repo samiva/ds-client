@@ -1,148 +1,153 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net.Sockets;
+using BombPeliLib.Events;
 
 namespace BombPeliLib
 {
 	public class GameState : State
 	{
-		private Config config;
-		private P2Pplayer client;
-		private GameInfo game;
-		private bool hasBomb = false;
-		private int originalBombTime;
-		private int bombTime;
-		private long startTime;
+		readonly private Config   config;
+		private          P2PApi?  client;
+		private          GameInfo game;
+		private          bool     hasBomb = false;
+		private          int      originalBombTime;
+		private          int      bombTime;
+		private          long     startTime;
 
-		public GameState (Config config, P2Pplayer p2p, GameInfo game, int bombTime) {
-			this.config = config;
-			this.client = p2p;
-			this.game = game;
-			this.bombTime = bombTime;
+		public GameState (Config config, P2PApi p2p, GameInfo game, int bombTime) {
+			this.config           = config;
+			this.client           = p2p;
+			this.game             = game;
+			this.bombTime         = bombTime;
 			this.originalBombTime = bombTime;
-			this.startTime = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds ();
+			this.startTime        = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds ();
 			if (this.client.IsHost) {
 				this.hasBomb = true;
 			}
 		}
 
 		~GameState () {
-			Destroy ();
+			this.Destroy ();
 		}
 
-		public P2Pplayer Client {
+		public P2PApi? Client {
 			get {
-				return client;
+				return this.client;
 			}
 		}
 
 		public bool HasBomb {
 			get {
-				return hasBomb;
+				return this.hasBomb;
 			}
 		}
 
 		public int OriginalBombTime {
 			get {
-				return originalBombTime;
+				return this.originalBombTime;
 			}
 		}
 
 		public void StartGame () {
-			if (client.IsHost) {
-				foreach (PeerInfo p in client.Peers) {
-					client.SendStartGame (p.Address, p.Port, bombTime);
-				}
+			if (this.client?.IsHost != true) {
+				return;
 			}
+			foreach (PeerInfo p in this.client.Peers) {
+				this.client.DoStartGame (p.ip, this.bombTime);
+			}
+
 		}
 
 		public void ResetBombTimes () {
-			startTime = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds ();
+			this.startTime = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds ();
 		}
 
 		public bool ReceiveBomb (int bombTime) {
-			hasBomb = true;
+			this.hasBomb = true;
 			return true;
 		}
 
 		public void SendBombFailedHandler (object sender, EventArgs e) {
-			FailPassBomb ();
+			this.FailPassBomb ();
 		}
 
-		public void PeerLeftHandler (object sender, P2PCommEventArgs e) {
-			if (client.IsHost) {
-				client.BroadcastPeerQuit (e.RemoteAddress, e.RemotePort);
+		public void PeerLeftHandler (object sender, PeerLeftEventArgs e) {
+			if (this.client?.IsHost == true) {
+				this.client.BroadcastPeerQuit (e.peer);
 			}
 		}
 
 		public bool IsWinner () {
-			return client.Peers.Count == 0;
+			using IEnumerator<PeerInfo> e = (this.client?.Peers ?? new List<PeerInfo> ()).GetEnumerator ();
+			return !e.MoveNext ();
 		}
 
 		public void Win() {
-			hasBomb = false;
-			Destroy();
+			this.hasBomb = false;
+			this.Destroy();
 		}
 
 		public void Lose () {
-			client.BroadcastLose ();
-			System.Threading.Thread.Sleep(500);
-			RespawnBomb();
-			Destroy();
+			this.client?.DoBroadcastLose ();
+			this.RespawnBomb();
+			this.Destroy();
 		}
 
 		public void LeaveGame() {
-			if (client?.IsHost == true) {
-				client?.BroadcastPeerQuit(game.Ip, game.Port);
+			if (this.client?.IsHost == true) {
+				this.client?.BroadcastPeerQuit(this.game.getEndpoint ());
 			} else {
-				client?.SendQuitGame(game.Ip, game.Port);
+				this.client?.DoLeaveGame(this.game.getEndpoint ());
 			}
-			Destroy();
+			this.Destroy();
 		}
 
 		public void PassBomb (PeerInfo peer, int bombtime) {
-			if (!hasBomb) {
+			if (!this.hasBomb) {
 				return;
 			}
 			try {
-				client.SendBomb (peer.Address, peer.Port, bombtime);
-				hasBomb = false;
-			} catch (SocketException ex) {
+				this.client?.DoSendBomb (peer.ip, bombtime);
+				this.hasBomb = false;
+			} catch (SocketException) {
 				// Likely dropped connection. Remove from target list.
-				client.RemovePeer (peer);
+				this.client?.RemovePeer (peer.ip);
 				throw;
 			}
 		}
 
 		public void FailPassBomb () {
-			hasBomb = true;
+			this.hasBomb = true;
 		}
 
 		private void RespawnBomb() {
-			PeerInfo? peer = client.GetRandomPeer();
-			if (!peer.HasValue || client.Peers.Count <= 1) {
+			PeerInfo? peer = this.client?.GetRandomPeer();
+			if (!peer.HasValue || this.client?.Peers.Count () <= 1) {
 				return;
 			}
 			try {
-				client.SendBomb (peer.Value.Address, peer.Value.Port, originalBombTime);
+				this.client?.DoSendBomb (peer.Value.ip, this.originalBombTime);
 			} catch {
 				throw;
 			}
-			hasBomb = false;
+			this.hasBomb = false;
 		}
 
 		private void Destroy () {
-			P2Pplayer c = client;
+			P2PApi? c = this.client;
 			if (c == null) {
 				return;
 			}
 			c.Close ();
-			client = null;
+			this.client = null;
 		}
 
 		public int getRemainingBombTime () {
 			long now = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds ();
-			return bombTime - (int)(now - startTime);
+			return this.bombTime - (int)(now - this.startTime);
 		}
+		
 	}
 }

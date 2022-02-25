@@ -1,15 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.ComponentModel;
 
 namespace BombPeli
 {
 	public class GameInfoView : INotifyPropertyChanged
 	{
 
+		public event PropertyChangedEventHandler? PropertyChanged;
+		
 		private string name;
 		private ushort port;
 
@@ -37,10 +34,8 @@ namespace BombPeli
 			}
 		}
 
-		public event PropertyChangedEventHandler PropertyChanged;
-
 		private void OnPropertyChanged (string? propertyName) {
-			PropertyChanged?.Invoke (this, new PropertyChangedEventArgs (propertyName));
+			this.PropertyChanged?.Invoke (this, new PropertyChangedEventArgs (propertyName));
 		}
 	}
 }

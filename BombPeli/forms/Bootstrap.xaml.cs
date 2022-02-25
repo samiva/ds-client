@@ -24,27 +24,27 @@ namespace BombPeli
 	{
 
 		public delegate void InitCompleteHandler (object sender, EventArgs e);
-		public event InitCompleteHandler InitComplete;
+		public event InitCompleteHandler? InitComplete;
 
 		public Bootstrap () {
 			InitializeComponent ();
 		}
 
-		public Config Config {
+		public Config? Config {
 			get; private set;
 		}
 
-		public List<GameInfo> Games {
+		public List<GameInfo>? Games {
 			get; private set;
 		}
 
-		public void Init (State state) {
+		public void Init (State? state) {
 		}
 
 		public void Clear () {
 		}
 
-		public State GetState () {
+		public State? GetState () {
 			return null;
 		}
 

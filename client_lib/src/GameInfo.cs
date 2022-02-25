@@ -1,33 +1,27 @@
+using System.Net;
+
 namespace BombPeliLib
 {
     public struct GameInfo {
 
-        public ulong Id {
-            get; private set;
-        }
-
-        public string Name {
-            get; private set;
-        }
-
-        public string Ip {
-            get; private set;
-        }
-
-        public ushort Port {
-            get; private set;
-        }
-
-        public GameStatus Status {
-            get; private set;
-        }
+        public  ulong       id       { get; set; }
+        public  string      name     { get; set; }
+        public  string      ip       { get; set; }
+        public  ushort      port     { get; set; }
+        public  GameStatus  status   { get; set; }
+        private IPEndPoint? endpoint { get; set; }
 
         public GameInfo (ulong id, string name, string ip, ushort port, GameStatus status) {
-            Id = id;
-            Name = name;
-            Ip = ip;
-            Port = port;
-            Status = status;
+            this.id       = id;
+            this.name     = name;
+            this.ip       = ip;
+            this.port     = port;
+            this.status   = status;
+            this.endpoint = null;
+        }
+
+        public IPEndPoint getEndpoint () {
+            return this.endpoint ??= new IPEndPoint (IPAddress.Parse (this.ip), this.port);
         }
 
     }

@@ -5,8 +5,18 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:BombPeli"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
-    <Grid Background="#FF807E7E">
-        <Frame x:Name="ContentFrame" Source="Init.xaml" NavigationUIVisibility="Hidden" />
-    </Grid>
+        Title="MainWindow" Height="600" Width="800">
+
+	<Grid Background="#FF807E7E">
+		<Grid.RowDefinitions>
+			<RowDefinition Height="3*" />
+			<RowDefinition Height="1*" />
+		</Grid.RowDefinitions>
+
+		<Frame Grid.Row="0" x:Name="ContentFrame" Source="Init.xaml" NavigationUIVisibility="Hidden" VerticalAlignment="Top"/>
+		<StackPanel Grid.Row="1">
+			<Label x:Name="label" Content="Network feed" HorizontalAlignment="Left" VerticalAlignment="Top" FontSize="14" FontWeight="Bold"/>
+			<TextBox x:Name="networkFeedView" HorizontalAlignment="Center" Text="" TextWrapping="Wrap" Height="120" IsReadOnly="True" IsReadOnlyCaretVisible="True" IsInactiveSelectionHighlightEnabled="True" VerticalScrollBarVisibility="Visible" Width="788"/>
+		</StackPanel>
+	</Grid>
 </Window>

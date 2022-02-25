@@ -26,13 +26,14 @@ namespace BombPeli
 
         public delegate void GameListEventHandler (object sender, EventArgs e);
         public delegate void JoinGameEventHandler (object sender, JoinGameEventArgs e);
-        public event GameListEventHandler CreateGame;
-        public event JoinGameEventHandler JoinGame;
-        public event GameListEventHandler Quit;
+        
+        public event GameListEventHandler? CreateGame;
+        public event JoinGameEventHandler? JoinGame;
+        public event GameListEventHandler? Quit;
 
-        private GameListState gameList;
-        private Config config;
-        private ObservableCollection<GameInfoView> gameViews = new ObservableCollection<GameInfoView> ();
+        private          GameListState                      gameList;
+        private          Config                             config;
+        private          ObservableCollection<GameInfoView> gameViews = new ObservableCollection<GameInfoView> ();
 
         public GameList (GameListState gameList, Config config) {
 		    InitializeComponent ();
@@ -48,7 +49,7 @@ namespace BombPeli
             }
         }
 
-        public void Init (State state) {
+        public void Init (State? state) {
         }
 
         public void Clear () {
@@ -68,24 +69,15 @@ namespace BombPeli
             int gameCount = games.Count;
             int viewCount = gameViews.Count;
 
-            for (
-                int i = gameCount, count = viewCount;
-                i < count;
-                ++i
-            ) {
-                gameViews.RemoveAt (i);
+            for (int i = gameCount; i < viewCount; ++i) {
+                gameViews.RemoveAt (gameCount);
             }
-            for (
-                int i = viewCount, count = gameCount;
-                i < count;
-                ++i
-            ) {
+            for (int i = viewCount; i < gameCount; ++i) {
                 gameViews.Add (new GameInfoView ());
             }
-            
             for (int i = 0; i < gameCount; ++i) {
-                gameViews[i].Name = games[i].Name;
-                gameViews[i].Port = games[i].Port;
+                gameViews[i].Name = games[i].name;
+                gameViews[i].Port = games[i].port;
             }
         }
 

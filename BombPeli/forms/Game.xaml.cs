@@ -26,18 +26,20 @@ namespace BombPeli
 		public delegate void PassBombEventHandler (object sender, EventArgs e);
 		public delegate void WinGameHandler (object sender, EventArgs e);
 		public delegate void LeaveGameEventHandler (object sender, EventArgs e);
-		public event PassBombEventHandler PassBomb;
-		public event LeaveGameEventHandler LeaveGame;
 
-		private GameState gameState;
+		public event PassBombEventHandler?  PassBomb;
+		public event LeaveGameEventHandler? LeaveGame;
 
+		private          GameState? gameState;
+		readonly private object     guiLock = new object ();
+		
 		public Game () {
 			InitializeComponent ();
 		}
 
-		public void Init (State state) {
+		public void Init (State? state) {
 			gameState = state as GameState;
-			if (gameState.HasBomb) {
+			if (gameState?.HasBomb == true) {
 				DoReceiveBomb ();
 			} else {
 				DoPassBomb ();
@@ -45,14 +47,14 @@ namespace BombPeli
 		}
 
 		public void Clear () {
-			P2Pplayer client = gameState.Client;
+			P2PApi? client = gameState?.Client;
 			if (client == null) {
 				return;
 			}
 			gameState = null;
 		}
 
-		public State GetState () {
+		public State? GetState () {
 			return gameState;
 		}
 
@@ -65,8 +67,10 @@ namespace BombPeli
 		}
 
 		public void DoReceiveBomb () {
-			BombImage.Visibility = Visibility.Visible;
-			passbomb.IsEnabled = true;
+			lock (this.guiLock) {
+				BombImage.Visibility = Visibility.Visible;
+				passbomb.IsEnabled = true;
+			}
 		}
 
 		public void DoFailBombSend () {
@@ -74,8 +78,10 @@ namespace BombPeli
 		}
 
 		public void DoPassBomb () {
-			BombImage.Visibility = Visibility.Hidden;
-			passbomb.IsEnabled = false;
+			lock (this.guiLock) {
+				BombImage.Visibility = Visibility.Hidden;
+				passbomb.IsEnabled   = false;
+			}
 		}
 
 	}

@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net5.0</TargetFramework>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <Compile Remove="src\PeerCollection.cs" />
+      <Compile Remove="src\PeerEntry.cs" />
+      <None Include="src\PeerEntry.cs" />
+      <Compile Remove="src\PeerManager.cs" />
+    </ItemGroup>
+
+</Project>
